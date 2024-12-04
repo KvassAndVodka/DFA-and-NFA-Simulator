@@ -97,14 +97,10 @@ function updateTransitionList() {
   }
 }
 
-function getRandomEdgeShape() {
-  const shapes = ["dynamic", "cubicBezier", "straightLine", "continuous"];
-  return shapes[Math.floor(Math.random() * shapes.length)];
-}
-
 function renderGraph() {
   const nodes = [];
   const edges = [];
+  let edgeOffset = {}; // To track the offset for multiple transitions between nodes
 
   // Add states as nodes with specific colors
   automaton.states.forEach((state) => {
@@ -136,9 +132,19 @@ function renderGraph() {
 
       destinationStates.forEach((toState, index) => {
         const isSelfLoop = fromState === toState;
-        const offset = isSelfLoop ? index * 0.1 : 0; // Offset self-loop edges slightly
-        const edgeShape = getRandomEdgeShape(); // Randomly select an edge shape
 
+        // If there are multiple transitions between the same two states, offset them
+        if (!edgeOffset[fromState]) edgeOffset[fromState] = {};
+        if (!edgeOffset[fromState][toState]) edgeOffset[fromState][toState] = 0;
+
+        // Offset for self-loops or multiple transitions between nodes
+        const offset = edgeOffset[fromState][toState];
+        edgeOffset[fromState][toState] += 1; // Increment offset for future transitions
+
+        // Adjust edge length to avoid overlap and improve spacing
+        const transitionLength = isSelfLoop ? 250 + offset * 100 : 250;
+
+        // Create an edge with dynamic offset for self-loops and prevent overlap
         edges.push({
           from: fromState,
           to: toState,
@@ -146,12 +152,12 @@ function renderGraph() {
           arrows: "to", // Direct the arrow to the 'to' state
           color: { color: "black" }, // Black arrow color
           smooth: {
-            type: edgeShape, // Apply the random edge shape
-            roundness: 0.4, // Adjust roundness for curved edges
+            type: isSelfLoop ? "cubicBezier" : "continuous", // Curved edges for self-loops
+            roundness: isSelfLoop ? 0.6 : 0.4, // Adjust roundness for self-loops
           },
           font: { align: "top" }, // Optional: adjust label placement
-          physics: true, // Ensure physics are enabled
-          length: 250 + offset * 50, // Offset edges for self-loops or tight transitions
+          physics: true, // Ensure physics are enabled for dynamic behavior
+          length: transitionLength, // Adjusted transition length
         });
       });
     }
@@ -174,7 +180,7 @@ function renderGraph() {
       arrows: {
         to: {
           enabled: true,
-          type: "arrow",
+          type: "arrow", // Arrow direction
         },
       },
       smooth: {
@@ -325,7 +331,6 @@ function renderGraphWithHighlight(fromState, toState, symbol) {
           toState === toState &&
           transitionSymbol === symbol;
 
-        // Only highlight the current transition edge
         edges.push({
           from: fromStateKey,
           to: toState,
@@ -335,7 +340,7 @@ function renderGraphWithHighlight(fromState, toState, symbol) {
             color: isCurrentTransition ? "red" : "black", // Highlight current transition in red
           },
           width: isCurrentTransition ? 3 : 1, // Thicker line for the current transition
-          smooth: { type: "cubicBezier", roundness: 0.4 },
+          smooth: { type: "continuous", roundness: 0.4 },
           font: { align: "top" },
         });
       });
