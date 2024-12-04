@@ -8,15 +8,24 @@ class NFA {
   }
 
   addState(state, isStart = false, isAccept = false) {
+    if (!state) {
+      throw new Error("State name cannot be empty.");
+    }
     if (this.states.has(state)) {
-      alert(`State '${state}' already exists.`);
-      return false;
+      throw new Error(`State '${state}' already exists.`);
     }
 
     this.states.add(state);
+
     if (isStart) {
+      if (this.startState) {
+        console.warn(
+          `Changing start state from '${this.startState}' to '${state}'.`
+        );
+      }
       this.startState = state;
     }
+
     if (isAccept) {
       this.acceptStates.add(state);
     }
