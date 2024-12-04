@@ -1,5 +1,4 @@
 let automaton;
-
 let network;
 
 function initializeAutomaton() {
@@ -98,6 +97,11 @@ function updateTransitionList() {
   }
 }
 
+function getRandomEdgeShape() {
+  const shapes = ["dynamic", "cubicBezier", "straightLine", "continuous"];
+  return shapes[Math.floor(Math.random() * shapes.length)];
+}
+
 function renderGraph() {
   const nodes = [];
   const edges = [];
@@ -130,15 +134,24 @@ function renderGraph() {
       // Handle both DFA (single toState) and NFA (multiple toStates) scenarios
       const destinationStates = Array.isArray(toStates) ? toStates : [toStates];
 
-      destinationStates.forEach((toState) => {
+      destinationStates.forEach((toState, index) => {
+        const isSelfLoop = fromState === toState;
+        const offset = isSelfLoop ? index * 0.1 : 0; // Offset self-loop edges slightly
+        const edgeShape = getRandomEdgeShape(); // Randomly select an edge shape
+
         edges.push({
           from: fromState,
           to: toState,
           label: symbol, // Label the transition with the symbol
           arrows: "to", // Direct the arrow to the 'to' state
           color: { color: "black" }, // Black arrow color
-          smooth: { type: "cubicBezier", roundness: 0.4 }, // Optional smoothness for edges
+          smooth: {
+            type: edgeShape, // Apply the random edge shape
+            roundness: 0.4, // Adjust roundness for curved edges
+          },
           font: { align: "top" }, // Optional: adjust label placement
+          physics: true, // Ensure physics are enabled
+          length: 250 + offset * 50, // Offset edges for self-loops or tight transitions
         });
       });
     }
@@ -150,7 +163,7 @@ function renderGraph() {
     edges: new vis.DataSet(edges),
   };
 
-  // Options for the graph (enable physics)
+  // Options for the graph (enable physics and adjust layout)
   const options = {
     nodes: {
       shape: "circle",
@@ -164,15 +177,31 @@ function renderGraph() {
           type: "arrow",
         },
       },
-      smooth: true,
+      smooth: {
+        enabled: true,
+        type: "dynamic", // Use dynamic smoothness for edges
+      },
       color: { color: "black" },
       font: { size: 10 },
     },
     layout: {
       hierarchical: false,
+      improvedLayout: true, // Improved layout to avoid overlapping
     },
     physics: {
       enabled: true, // Keep physics enabled for smooth movement
+      barnesHut: {
+        gravitationalConstant: -2000, // Adjust gravity to avoid nodes clumping together
+        centralGravity: 0.1, // Modify central gravity to pull nodes apart
+        springLength: 250, // Adjust spring length to spread nodes further apart
+      },
+      forceAtlas2Based: {
+        gravitationalConstant: -1000,
+        centralGravity: 0.01,
+        springLength: 250,
+        springConstant: 0.08,
+        avoidOverlap: 0.5, // Ensure nodes don't overlap
+      },
     },
   };
 
@@ -282,33 +311,30 @@ function renderGraphWithHighlight(fromState, toState, symbol) {
   });
 
   // Add transitions as directed edges
-  for (const fromState in automaton.transitions) {
-    for (const transitionSymbol in automaton.transitions[fromState]) {
-      const toStates = automaton.transitions[fromState][transitionSymbol];
+  for (const fromStateKey in automaton.transitions) {
+    for (const transitionSymbol in automaton.transitions[fromStateKey]) {
+      const toStates = automaton.transitions[fromStateKey][transitionSymbol];
 
       // Handle both DFA (single toState) and NFA (multiple toStates) scenarios
       const destinationStates = Array.isArray(toStates) ? toStates : [toStates];
 
       destinationStates.forEach((toState) => {
+        // Check if this is the current transition to highlight
+        const isCurrentTransition =
+          fromStateKey === fromState &&
+          toState === toState &&
+          transitionSymbol === symbol;
+
+        // Only highlight the current transition edge
         edges.push({
-          from: fromState,
+          from: fromStateKey,
           to: toState,
           label: transitionSymbol,
           arrows: "to",
           color: {
-            color:
-              fromState === fromState &&
-              toState === toState &&
-              transitionSymbol === symbol
-                ? "red" // Highlight current transition
-                : "black", // Default color for transitions
+            color: isCurrentTransition ? "red" : "black", // Highlight current transition in red
           },
-          width:
-            fromState === fromState &&
-            toState === toState &&
-            transitionSymbol === symbol
-              ? 3 // Make highlighted transition thicker
-              : 1, // Default width for other transitions
+          width: isCurrentTransition ? 3 : 1, // Thicker line for the current transition
           smooth: { type: "cubicBezier", roundness: 0.4 },
           font: { align: "top" },
         });
