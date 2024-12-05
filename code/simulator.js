@@ -1,67 +1,113 @@
 let automaton;
 let network;
 
+/**
+ * Initialize an automaton instance (DFA or NFA) based on user selection.
+ */
 function initializeAutomaton() {
-  const type = document.getElementById("automatonType").value;
-  if (type === "DFA") {
-    automaton = new DFA();
-  } else if (type === "NFA") {
-    automaton = new NFA();
+  const selectedType = document.getElementById("automatonType").value;
+
+  switch (selectedType) {
+    case "DFA":
+      automaton = new DFA();
+      break;
+    case "NFA":
+      automaton = new NFA();
+      break;
+    default:
+      throw new Error(`Unknown automaton type: ${selectedType}`);
   }
+
   document.getElementById("stateList").innerHTML = "";
   document.getElementById("transitionList").innerHTML = "";
-  document.getElementById("result").textContent = `Initialized ${type}`;
+  document.getElementById("result").textContent = `Initialized ${selectedType}`;
   renderGraph(); // Initialize graph when automaton is initialized
 }
 
+/**
+ * Adds a new state to the automaton instance.
+ */
 function addState() {
-  const name = document.getElementById("stateName").value.trim();
-  const isStart = document.getElementById("startState").checked;
-  const isAccept = document.getElementById("acceptState").checked;
+  const stateName = document.getElementById("stateName").value.trim();
+  const isStartState = document.getElementById("startState").checked;
+  const isAcceptState = document.getElementById("acceptState").checked;
 
-  if (name === "") {
+  // Check for empty state name
+  if (stateName === "") {
     alert("State name cannot be empty.");
     return;
   }
 
-  automaton.addState(name, isStart, isAccept);
+  // Add state to the automaton instance and update the state list
+  automaton.addState(stateName, isStartState, isAcceptState);
   updateStateList();
-  document.getElementById("result").textContent = `State ${name} added.`;
-  document.getElementById("stateName").value = "";
-  document.getElementById("startState").checked = false;
-  document.getElementById("acceptState").checked = false;
 
-  renderGraph(); // Update graph after adding a state
+  // Update the result display
+  document.getElementById("result").textContent = `State ${stateName} added.`;
+
+  // Reset the state form to its original state
+  resetStateForm();
+
+  // Re-render the graph with the new state
+  renderGraph();
 }
 
+/**
+ * Resets the state form to its original state.
+ */
+function resetStateForm() {
+  // Clear the state name input
+  const stateNameField = document.getElementById("stateName");
+  stateNameField.value = "";
+
+  // Uncheck the start state and accept state checkboxes
+  const startStateCheckbox = document.getElementById("startState");
+  startStateCheckbox.checked = false;
+
+  const acceptStateCheckbox = document.getElementById("acceptState");
+  acceptStateCheckbox.checked = false;
+}
+
+/**
+ * Adds a transition to the automaton (either NFA or DFA) based on user input.
+ */
 function addTransition() {
   const fromState = document.getElementById("fromState").value.trim();
   const symbol = document.getElementById("symbol").value.trim();
-  const toStatesInput = document.getElementById("toState").value.trim();
+  const toStateInput = document.getElementById("toState").value.trim();
 
-  if (fromState === "" || symbol === "" || toStatesInput === "") {
-    alert("All fields must be filled.");
+  const isNFA = automaton instanceof NFA;
+  // Use epsilon for empty symbols in NFA, enforce symbol for DFA
+  const transitionSymbol = symbol || (isNFA ? "ε" : "");
+
+  // Validate 'From State' and 'To State' inputs
+  if (!fromState || !toStateInput) {
+    alert("Both 'From State' and 'To State' must be provided.");
     return;
   }
 
-  // Convert toStates input into an array of states (for NFA, could be multiple states)
-  const toStates = toStatesInput.split(",").map((state) => state.trim());
+  // Ensure DFA transitions have a valid symbol
+  if (!isNFA && !transitionSymbol) {
+    alert("A valid symbol is required for DFA transitions.");
+    return;
+  }
 
-  // For DFA, we expect a single destination state, so we just take the first element
-  const transitionTarget = automaton instanceof DFA ? toStates[0] : toStates;
+  // Parse 'To States' for NFA or single 'To State' for DFA
+  const toStates = toStateInput.split(",").map((state) => state.trim());
+  const targetState = isNFA ? toStates : toStates[0];
 
-  // Add transition to automaton
-  automaton.addTransition(fromState, symbol, transitionTarget);
+  // Add the transition to the automaton instance
+  automaton.addTransition(fromState, transitionSymbol, targetState);
 
-  // Update transition list and display result
+  // Update the transition list UI
   updateTransitionList();
   document.getElementById(
     "result"
-  ).textContent = `Transition added: ${fromState} --${symbol}--> ${toStates.join(
+  ).textContent = `Transition added: ${fromState} --${transitionSymbol}--> ${toStates.join(
     ", "
   )}`;
 
-  // Reset the input fields
+  // Reset transition form inputs
   document.getElementById("fromState").value = "";
   document.getElementById("symbol").value = "";
   document.getElementById("toState").value = "";
@@ -70,39 +116,72 @@ function addTransition() {
   renderGraph();
 }
 
+/**
+ * Updates the state list UI with the current states of the automaton.
+ */
 function updateStateList() {
-  const stateList = document.getElementById("stateList");
-  stateList.innerHTML = "";
-  automaton.states.forEach((state) => {
+  const stateListElement = document.getElementById("stateList");
+  stateListElement.innerHTML = "";
+
+  // Iterate over the states of the automaton
+  for (const state of automaton.states) {
+    // Create a list item for each state
     const listItem = document.createElement("li");
-    listItem.textContent = `${state} ${
-      state === automaton.startState ? "(Start)" : ""
-    } ${automaton.acceptStates.has(state) ? "(Accept)" : ""}`;
-    stateList.appendChild(listItem);
-  });
+    listItem.textContent = [
+      state,
+      state === automaton.startState ? "(Start)" : "",
+      automaton.acceptStates.has(state) ? "(Accept)" : "",
+    ]
+      .filter((text) => !!text)
+      .join(" ");
+    // Add the list item to the state list UI
+    stateListElement.appendChild(listItem);
+  }
 }
 
+/**
+ * Updates the transition list UI with the current transitions of the automaton.
+ */
 function updateTransitionList() {
-  const transitionList = document.getElementById("transitionList");
-  transitionList.innerHTML = "";
-  for (const fromState in automaton.transitions) {
-    for (const symbol in automaton.transitions[fromState]) {
-      const toStates = automaton.transitions[fromState][symbol];
+  // Get the transition list element from the DOM
+  const transitionListElement = document.getElementById("transitionList");
+
+  // Clear existing transition list entries
+  transitionListElement.innerHTML = "";
+
+  // Iterate over each source state in the automaton's transitions
+  for (const sourceState in automaton.transitions) {
+    // Iterate over each transition symbol for the current source state
+    for (const transitionSymbol in automaton.transitions[sourceState]) {
+      // Retrieve the destination states for the current source state and symbol
+      const destinationStates =
+        automaton.transitions[sourceState][transitionSymbol];
+
+      // Create a list item element to represent the transition
       const listItem = document.createElement("li");
-      listItem.textContent = `${fromState} --${symbol}--> ${
-        Array.isArray(toStates) ? toStates.join(", ") : toStates
+      listItem.textContent = `${sourceState} --${transitionSymbol}--> ${
+        Array.isArray(destinationStates)
+          ? destinationStates.join(", ")
+          : destinationStates
       }`;
-      transitionList.appendChild(listItem);
+
+      // Append the list item to the transition list element in the UI
+      transitionListElement.appendChild(listItem);
     }
   }
 }
 
+/**
+ * Renders the automaton graph using vis.js library.
+ * This function creates and updates the visual representation of the automaton,
+ * including its states as nodes and transitions as edges.
+ */
 function renderGraph() {
   const nodes = [];
   const edges = [];
-  let edgeOffset = {}; // To track the offset for multiple transitions between nodes
+  const edgeOffsets = {}; // To handle edge offsets for self-loops
 
-  // Add states as nodes with specific colors
+  // Add states as nodes with specific styling
   automaton.states.forEach((state) => {
     nodes.push({
       id: state,
@@ -111,10 +190,10 @@ function renderGraph() {
       color: {
         background:
           state === automaton.startState
-            ? "blue"
+            ? "blue" // Highlight start state
             : automaton.acceptStates.has(state)
-            ? "green"
-            : "white",
+            ? "green" // Highlight accept states
+            : "white", // Regular state
         border: "black",
       },
       size: automaton.acceptStates.has(state) ? 30 : 20, // Larger size for accept states
@@ -122,54 +201,49 @@ function renderGraph() {
     });
   });
 
-  // Add transitions as directed edges with black arrows
+  // Add transitions as directed edges
   for (const fromState in automaton.transitions) {
     for (const symbol in automaton.transitions[fromState]) {
-      const toStates = automaton.transitions[fromState][symbol];
+      const toStates = Array.isArray(automaton.transitions[fromState][symbol])
+        ? automaton.transitions[fromState][symbol]
+        : [automaton.transitions[fromState][symbol]];
 
-      // Handle both DFA (single toState) and NFA (multiple toStates) scenarios
-      const destinationStates = Array.isArray(toStates) ? toStates : [toStates];
-
-      destinationStates.forEach((toState, index) => {
+      toStates.forEach((toState) => {
         const isSelfLoop = fromState === toState;
 
-        // If there are multiple transitions between the same two states, offset them
-        if (!edgeOffset[fromState]) edgeOffset[fromState] = {};
-        if (!edgeOffset[fromState][toState]) edgeOffset[fromState][toState] = 0;
+        // Initialize edge offset for self-loop handling
+        if (!edgeOffsets[fromState]) edgeOffsets[fromState] = {};
+        if (!edgeOffsets[fromState][toState])
+          edgeOffsets[fromState][toState] = 0;
 
-        // Offset for self-loops or multiple transitions between nodes
-        const offset = edgeOffset[fromState][toState];
-        edgeOffset[fromState][toState] += 1; // Increment offset for future transitions
-
-        // Adjust edge length to avoid overlap and improve spacing
+        const offset = edgeOffsets[fromState][toState]++;
         const transitionLength = isSelfLoop ? 250 + offset * 100 : 250;
 
-        // Create an edge with dynamic offset for self-loops and prevent overlap
         edges.push({
           from: fromState,
           to: toState,
-          label: symbol, // Label the transition with the symbol
-          arrows: "to", // Direct the arrow to the 'to' state
-          color: { color: "black" }, // Black arrow color
+          label: symbol,
+          arrows: "to",
+          color: { color: "black" },
           smooth: {
-            type: isSelfLoop ? "cubicBezier" : "continuous", // Curved edges for self-loops
-            roundness: isSelfLoop ? 0.6 : 0.4, // Adjust roundness for self-loops
+            type: isSelfLoop ? "cubicBezier" : "continuous",
+            roundness: isSelfLoop ? 0.6 : 0.4,
           },
-          font: { align: "top" }, // Optional: adjust label placement
-          physics: true, // Ensure physics are enabled for dynamic behavior
-          length: transitionLength, // Adjusted transition length
+          font: { align: "top" },
+          physics: true,
+          length: transitionLength,
         });
       });
     }
   }
 
-  // Create the graph data
+  // Prepare data for the network
   const data = {
     nodes: new vis.DataSet(nodes),
     edges: new vis.DataSet(edges),
   };
 
-  // Options for the graph (enable physics and adjust layout)
+  // Configure the network options
   const options = {
     nodes: {
       shape: "circle",
@@ -180,43 +254,42 @@ function renderGraph() {
       arrows: {
         to: {
           enabled: true,
-          type: "arrow", // Arrow direction
+          type: "arrow",
         },
       },
       smooth: {
         enabled: true,
-        type: "dynamic", // Use dynamic smoothness for edges
+        type: "dynamic",
       },
       color: { color: "black" },
       font: { size: 10 },
     },
     layout: {
       hierarchical: false,
-      improvedLayout: true, // Improved layout to avoid overlapping
+      improvedLayout: true,
     },
     physics: {
-      enabled: true, // Keep physics enabled for smooth movement
+      enabled: true,
       barnesHut: {
-        gravitationalConstant: -2000, // Adjust gravity to avoid nodes clumping together
-        centralGravity: 0.1, // Modify central gravity to pull nodes apart
-        springLength: 250, // Adjust spring length to spread nodes further apart
+        gravitationalConstant: -2000,
+        centralGravity: 0.1,
+        springLength: 250,
       },
       forceAtlas2Based: {
         gravitationalConstant: -1000,
         centralGravity: 0.01,
         springLength: 250,
         springConstant: 0.08,
-        avoidOverlap: 0.5, // Ensure nodes don't overlap
+        avoidOverlap: 0.5,
       },
     },
   };
 
-  // Initialize the network only once (if not already initialized)
+  // Initialize or update the network
   if (!network) {
     const container = document.getElementById("network");
     network = new vis.Network(container, data, options);
   } else {
-    // If network already exists, just update the data
     network.setData(data);
   }
 }
@@ -230,15 +303,49 @@ function simulateWithAnimation(input) {
   // Reset graph to initial state
   renderGraph();
 
-  let currentState = automaton.startState;
+  let currentStates = [automaton.startState];
   let currentIndex = 0;
+
+  // Function to compute epsilon closure with animation
+  function getEpsilonClosure(states) {
+    const closure = new Set(states);
+    const stack = [...states];
+    const epsilonPath = [];
+
+    while (stack.length > 0) {
+      const state = stack.pop();
+
+      // Check for epsilon transitions from this state
+      if (automaton.transitions[state] && automaton.transitions[state]["ε"]) {
+        const epsilonTransitions = automaton.transitions[state]["ε"];
+        const newStates = Array.isArray(epsilonTransitions)
+          ? epsilonTransitions
+          : [epsilonTransitions];
+
+        newStates.forEach((epsilonState) => {
+          if (!closure.has(epsilonState)) {
+            closure.add(epsilonState);
+            stack.push(epsilonState);
+            epsilonPath.push({ from: state, to: epsilonState });
+          }
+        });
+      }
+    }
+
+    return {
+      closureStates: Array.from(closure),
+      epsilonPath: epsilonPath,
+    };
+  }
 
   // Perform step-by-step animation
   function animateStep() {
     // Check if we've processed all input
     if (currentIndex >= input.length) {
       // Final state check
-      const isAccepted = automaton.acceptStates.has(currentState);
+      const isAccepted = currentStates.some((state) =>
+        automaton.acceptStates.has(state)
+      );
       document.getElementById("result").textContent = isAccepted
         ? "Accepted"
         : "Rejected";
@@ -247,99 +354,174 @@ function simulateWithAnimation(input) {
 
     const symbol = input[currentIndex];
 
-    // Update result display with current processing
-    document.getElementById(
-      "result"
-    ).textContent = `Processing symbol: ${symbol} (State: ${currentState})`;
+    // First, compute epsilon closure of current states with animation
+    function performEpsilonClosure() {
+      const { closureStates, epsilonPath } = getEpsilonClosure(currentStates);
 
-    // Check if transition exists
-    if (
-      !automaton.transitions[currentState] ||
-      !automaton.transitions[currentState][symbol]
-    ) {
-      document.getElementById(
-        "result"
-      ).textContent = `Rejected: No transition for ${symbol} from state ${currentState}`;
-      return;
+      // If no epsilon transitions, proceed to next step
+      if (epsilonPath.length === 0) {
+        processSymbol(closureStates);
+        return;
+      }
+
+      // Animate epsilon transitions
+      function animateEpsilonTransitions(pathIndex = 0) {
+        if (pathIndex >= epsilonPath.length) {
+          // After all epsilon transitions, process symbol
+          processSymbol(closureStates);
+          return;
+        }
+
+        const { from, to } = epsilonPath[pathIndex];
+
+        // Highlight epsilon transition
+        document.getElementById(
+          "result"
+        ).textContent = `ε-transition: ${from} → ${to}`;
+
+        renderGraphWithMultiStateHighlight([from], [to], "ε");
+
+        // Next epsilon transition after delay
+        setTimeout(() => {
+          animateEpsilonTransitions(pathIndex + 1);
+        }, 1000);
+      }
+
+      // Start epsilon transition animation
+      animateEpsilonTransitions();
     }
 
-    // Get next state (could be an array for NFA)
-    const nextState = Array.isArray(automaton.transitions[currentState][symbol])
-      ? automaton.transitions[currentState][symbol][0]
-      : automaton.transitions[currentState][symbol];
+    // Process symbol after epsilon transitions
+    function processSymbol(closureStates) {
+      // Update current states to closure states
+      currentStates = closureStates;
 
-    // Render graph with highlighted transition
-    renderGraphWithHighlight(currentState, nextState, symbol);
+      // Update result display with current processing
+      document.getElementById(
+        "result"
+      ).textContent = `Processing symbol: ${symbol} (States: ${currentStates.join(
+        ", "
+      )})`;
 
-    // Move to next state
-    currentState = nextState;
-    currentIndex++;
+      // Compute next states for the current symbol
+      const nextStates = [];
+      currentStates.forEach((state) => {
+        if (
+          automaton.transitions[state] &&
+          automaton.transitions[state][symbol]
+        ) {
+          const transitionTargets = automaton.transitions[state][symbol];
+          const targets = Array.isArray(transitionTargets)
+            ? transitionTargets
+            : [transitionTargets];
+          nextStates.push(...targets);
+        }
+      });
 
-    // Schedule next step with 1 second delay for animation
-    setTimeout(animateStep, 1000);
+      // If no transitions found
+      if (nextStates.length === 0) {
+        document.getElementById(
+          "result"
+        ).textContent = `Rejected: No transition for ${symbol} from states ${currentStates.join(
+          ", "
+        )}`;
+        return;
+      }
+
+      // Render graph with current states highlighted
+      renderGraphWithMultiStateHighlight(currentStates, nextStates, symbol);
+
+      // Move to next states and next symbol
+      currentStates = nextStates;
+      currentIndex++;
+
+      // Schedule next step with 1 second delay for animation
+      setTimeout(animateStep, 1000);
+    }
+
+    // Start by performing epsilon closure with animation
+    performEpsilonClosure();
   }
 
   // Start animation
   animateStep();
 }
 
-function renderGraphWithHighlight(fromState, toState, symbol) {
+/**
+ * Renders the graph with multiple states highlighted.
+ * This is used for animation in the simulateWithAnimation() function.
+ * @param {string[]} currentStates - The current states of the automaton
+ * @param {string[]} nextStates - The next states of the automaton
+ * @param {string} transitionSymbol - The transition symbol
+ */
+function renderGraphWithMultiStateHighlight(
+  currentStates,
+  nextStates,
+  transitionSymbol
+) {
   const nodes = [];
   const edges = [];
 
-  // Add states as nodes with specific colors
+  // Add nodes with specific colors based on their state
   automaton.states.forEach((state) => {
     nodes.push({
       id: state,
       label: state,
       shape: "circle",
       color: {
-        background:
-          state === fromState
-            ? "yellow" // Highlight current state
-            : state === toState
-            ? "orange" // Highlight next state
-            : state === automaton.startState
-            ? "blue"
-            : automaton.acceptStates.has(state)
-            ? "green"
-            : "white",
+        // Highlight current states in yellow
+        background: currentStates.includes(state)
+          ? "yellow"
+          : // Highlight next states in orange
+          nextStates.includes(state)
+          ? "orange"
+          : // Highlight start state in blue
+          state === automaton.startState
+          ? "blue"
+          : // Highlight accept states in green
+          automaton.acceptStates.has(state)
+          ? "green"
+          : // All other states are white
+            "white",
         border: "black",
       },
+      // Increase size of highlighted states
       size:
-        state === fromState ||
-        state === toState ||
+        currentStates.includes(state) ||
+        nextStates.includes(state) ||
         automaton.acceptStates.has(state)
           ? 30
-          : 20, // Larger size for highlighted or accept states
-      borderWidth: automaton.acceptStates.has(state) ? 4 : 2, // Thicker border for accept states
+          : 20,
+      // Increase border width of accept states
+      borderWidth: automaton.acceptStates.has(state) ? 4 : 2,
     });
   });
 
-  // Add transitions as directed edges
-  for (const fromStateKey in automaton.transitions) {
-    for (const transitionSymbol in automaton.transitions[fromStateKey]) {
-      const toStates = automaton.transitions[fromStateKey][transitionSymbol];
+  // Add edges for transitions
+  for (const sourceState in automaton.transitions) {
+    for (const symbol in automaton.transitions[sourceState]) {
+      const targetStates = automaton.transitions[sourceState][symbol];
+      const destinations = Array.isArray(targetStates)
+        ? targetStates
+        : [targetStates];
 
-      // Handle both DFA (single toState) and NFA (multiple toStates) scenarios
-      const destinationStates = Array.isArray(toStates) ? toStates : [toStates];
-
-      destinationStates.forEach((toState) => {
-        // Check if this is the current transition to highlight
-        const isCurrentTransition =
-          fromStateKey === fromState &&
-          toState === toState &&
-          transitionSymbol === symbol;
+      destinations.forEach((targetState) => {
+        const isActiveTransition =
+          currentStates.includes(sourceState) &&
+          nextStates.includes(targetState) &&
+          symbol === transitionSymbol;
 
         edges.push({
-          from: fromStateKey,
-          to: toState,
-          label: transitionSymbol,
+          from: sourceState,
+          to: targetState,
+          label: symbol,
           arrows: "to",
           color: {
-            color: isCurrentTransition ? "red" : "black", // Highlight current transition in red
+            // Highlight active transitions in red
+            color: isActiveTransition ? "red" : "black",
           },
-          width: isCurrentTransition ? 3 : 1, // Thicker line for the current transition
+          // Increase width of highlighted transitions
+          width: isActiveTransition ? 3 : 1,
           smooth: { type: "continuous", roundness: 0.4 },
           font: { align: "top" },
         });
@@ -347,16 +529,14 @@ function renderGraphWithHighlight(fromState, toState, symbol) {
     }
   }
 
-  // Create the graph data
-  const data = {
+  // Set the data for the network visualization
+  const graphData = {
     nodes: new vis.DataSet(nodes),
     edges: new vis.DataSet(edges),
   };
 
-  // Update the existing network with new data
-  network.setData(data);
+  network.setData(graphData);
 }
-
 // Modify the existing simulate button to use animation
 function simulate() {
   const testString = document.getElementById("testString").value.trim();
