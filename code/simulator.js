@@ -303,13 +303,10 @@ function simulateWithAnimation(input) {
   // Reset graph to initial state
   renderGraph();
 
-  let currentStates = [automaton.startState];
-  let currentIndex = 0;
-
-  // Function to compute epsilon closure with animation
-  function getEpsilonClosure(states) {
-    const closure = new Set(states);
-    const stack = [...states];
+  // Improved Epsilon Closure function
+  function getEpsilonClosure(initialStates) {
+    const closure = new Set(initialStates);
+    const stack = [...initialStates];
     const epsilonPath = [];
 
     while (stack.length > 0) {
@@ -338,11 +335,27 @@ function simulateWithAnimation(input) {
     };
   }
 
+  // Handle empty string explicitly
+  if (input.length === 0) {
+    const { closureStates } = getEpsilonClosure([automaton.startState]);
+    const isAccepted = closureStates.some((state) =>
+      automaton.acceptStates.has(state)
+    );
+    document.getElementById("result").textContent = isAccepted
+      ? "Accepted (Empty String)"
+      : "Rejected (Empty String)";
+    renderGraphWithMultiStateHighlight(closureStates, [], "ε");
+    return;
+  }
+
+  let currentStates = [automaton.startState];
+  let currentIndex = 0;
+
   // Perform step-by-step animation
   function animateStep() {
     // Check if we've processed all input
     if (currentIndex >= input.length) {
-      // Final state check
+      // Final state check - accept if ANY current state is an accept state
       const isAccepted = currentStates.some((state) =>
         automaton.acceptStates.has(state)
       );
@@ -358,13 +371,7 @@ function simulateWithAnimation(input) {
     function performEpsilonClosure() {
       const { closureStates, epsilonPath } = getEpsilonClosure(currentStates);
 
-      // If no epsilon transitions, proceed to next step
-      if (epsilonPath.length === 0) {
-        processSymbol(closureStates);
-        return;
-      }
-
-      // Animate epsilon transitions
+      // Animate epsilon transitions if any exist
       function animateEpsilonTransitions(pathIndex = 0) {
         if (pathIndex >= epsilonPath.length) {
           // After all epsilon transitions, process symbol
@@ -387,25 +394,22 @@ function simulateWithAnimation(input) {
         }, 1000);
       }
 
+      // If no epsilon transitions, directly process symbol
+      if (epsilonPath.length === 0) {
+        processSymbol(closureStates);
+        return;
+      }
+
       // Start epsilon transition animation
       animateEpsilonTransitions();
     }
 
     // Process symbol after epsilon transitions
     function processSymbol(closureStates) {
-      // Update current states to closure states
-      currentStates = closureStates;
-
-      // Update result display with current processing
-      document.getElementById(
-        "result"
-      ).textContent = `Processing symbol: ${symbol} (States: ${currentStates.join(
-        ", "
-      )})`;
-
-      // Compute next states for the current symbol
+      // Compute next states for the current symbol across ALL current states
       const nextStates = [];
-      currentStates.forEach((state) => {
+
+      closureStates.forEach((state) => {
         if (
           automaton.transitions[state] &&
           automaton.transitions[state][symbol]
@@ -422,17 +426,32 @@ function simulateWithAnimation(input) {
       if (nextStates.length === 0) {
         document.getElementById(
           "result"
-        ).textContent = `Rejected: No transition for ${symbol} from states ${currentStates.join(
+        ).textContent = `Rejected: No transition for ${symbol} from states ${closureStates.join(
           ", "
         )}`;
         return;
       }
 
-      // Render graph with current states highlighted
-      renderGraphWithMultiStateHighlight(currentStates, nextStates, symbol);
+      // Get epsilon closure of next states
+      const { closureStates: nextClosureStates } =
+        getEpsilonClosure(nextStates);
+
+      // Update result display
+      document.getElementById(
+        "result"
+      ).textContent = `Processing symbol: ${symbol} (States: ${nextClosureStates.join(
+        ", "
+      )})`;
+
+      // Render graph with current and next states
+      renderGraphWithMultiStateHighlight(
+        closureStates,
+        nextClosureStates,
+        symbol
+      );
 
       // Move to next states and next symbol
-      currentStates = nextStates;
+      currentStates = nextClosureStates;
       currentIndex++;
 
       // Schedule next step with 1 second delay for animation
