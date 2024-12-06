@@ -1,3 +1,20 @@
+/* Header Styling */
+header {
+  background: linear-gradient(0deg, #212129, #2d2d39);
+  color: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+  header h1 {
+    margin: 0;
+    font-size: 1.8rem; /* Adjust font size */
+    color: #ffffff; /* Ensure text stands out against gradient */  }
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -5,45 +22,40 @@ body {
   flex-direction: column;
 }
 
-/* Header Styling */
-header {
-  background-color: #333;
-  color: white;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-  header h1 {
-    margin: 0;
-  }
-
 /* Main Layout */
 #main-container {
-  display: flex;
-  height: 100vh;
+  background-color: #141416;
+  z-index: 0; /* Ensure it's behind the header */
 }
 
-/* Sidebar Styling */
-#sidebar-left, #sidebar-right {
+/* Sidebar Styling */ /*#0c0d0f*/
+#sidebar-left {
+  background-color: #0c0d0f;
   height: 100vh;
-  background-color: #1a1a1a;
-  color: white;
-  border-right: 2px solid #cccccc;
+  overflow-y: auto;
 }
-  #sidebar-left h2, #sidebar-left h3 {
-    color: #f1f1f1;
-  }
 
 /* Graph/Network Section */
 #network {
   flex-grow: 1;
   padding: 10px;
-  height: 650px;
+  height: 600px;
   background-color: #fff;
+  border-radius: 4px;
 }
-.list-group-item {
-  background-color: #343a40;
+  .list-group-item {
+    background-color: #1e5e9f;
+    color: white;
+  }
+
+#result{
+  background-color: #ffffff;
   color: white;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
 }
 
+#footer{
+  position: fixed;
+}
