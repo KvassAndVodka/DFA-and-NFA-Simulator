@@ -38,7 +38,7 @@
     <div class="container-fluid">
       <div class="row">
         <!-- Left Sidebar for States and Transitions -->
-        <aside class="col-md-2 bg-dark text-white p-3 border-right" id="sidebar-left">
+        <aside class="col-md-3 bg-dark text-white p-3 border-right" id="sidebar-left">
           <h2>Add States</h2>
           <input
             type="text"
@@ -84,10 +84,27 @@
           </button>
 
           <h3 class="mt-4">States</h3>
-          <ul id="stateList" class="list-group"></ul>
+          <table class="table table-striped table-bordered text-white" id="stateTable">
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
 
           <h3 class="mt-4">Transitions</h3>
-          <ul id="transitionList" class="list-group"></ul>
+          <table class="table table-striped table-bordered text-white" id="transitionTable">
+            <thead>
+              <tr>
+                <th>From</th>
+                <th>Symbol</th>
+                <th>To</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>          
 
           <h2 class="mt-4">Test String</h2>
           <input
@@ -102,15 +119,10 @@
         </aside>
 
         <!-- Main Graph Display -->
-        <main class="col-md-8 p-3 bg-light">
+        <main class="col-md-9 p-3 bg-light">
           <div id="network" class="border border-black"></div>
           <div id="result" class="output mt-3 p-3 border border-black bg-light text-dark"></div>
         </main>
-
-        <!-- Right Sidebar for -->
-        <aside class="col-md-2 bg-dark text-white p-3 border-left" id="sidebar-right">
-
-        </aside>
       </div>
     </div>
 
