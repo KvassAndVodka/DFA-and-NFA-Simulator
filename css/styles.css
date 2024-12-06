@@ -1,3 +1,6 @@
+/*button 
+#2c2c38*/
+
 /* Header Styling */
 header {
   background: linear-gradient(0deg, #212129, #2d2d39);
@@ -30,30 +33,84 @@ body {
 
 /* Sidebar Styling */ /*#0c0d0f*/
 #sidebar-left {
-  background-color: #0c0d0f;
+  background-color: #22262d;
   height: 100vh;
   overflow-y: auto;
 }
 
+#sidebar-button{
+  background: linear-gradient(0deg, #21212A, #2D2D39);
+  color: #ffffff;
+  border: none;
+  transition: background 0.3s ease, transform 0.2s ease; /* Smooth transition for hover effect */
+} #sidebar-button:hover{
+  cursor: pointer;
+  background: linear-gradient(0deg, #921131, #BF1641);
+  transform: scale(1.05); /* Slightly increase size for visual feedback */
+}
+
+#stateName{
+  border: none;
+  background-color: #141416;
+  color: #ffffff;
+}#stateName::placeholder {
+    color: #515151;
+    opacity: 1;
+  }
+
+#fromState{
+  border: none;
+  background-color: #141416;
+  color: #ffffff;
+}#fromState::placeholder {
+    color: #515151;
+    opacity: 1;
+  }
+
+#symbol{
+    border: none;
+    background-color: #141416;
+    color: #ffffff;
+  }#symbol::placeholder {
+      color: #515151;
+      opacity: 1;
+    }
+
+#toState{
+    border: none;
+    background-color: #141416;
+    color: #ffffff;
+  }#toState::placeholder {
+      color: #515151;
+      opacity: 1;
+    }
+
+#testString{
+    border: none;
+    background-color: #141416;
+    color: #ffffff;
+  }#testString::placeholder {
+      color: #515151;
+      opacity: 1;
+    }
+
+    
 /* Graph/Network Section */
 #network {
   flex-grow: 1;
   padding: 10px;
   height: 600px;
-  background-color: #fff;
+  background-color: #343434;
   border-radius: 4px;
 }
-  .list-group-item {
-    background-color: #1e5e9f;
-    color: white;
-  }
 
 #result{
-  background-color: #ffffff;
+  background-color: #343434;
   color: white;
   border-radius: 4px;
   padding: 10px;
-  margin-top: 10px;
+  margin-top: 25px;
+  height: 4%;
 }
 
 #footer{
