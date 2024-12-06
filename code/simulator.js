@@ -301,7 +301,7 @@ function renderGraph() {
             type: isSelfLoop ? "cubicBezier" : "continuous",
             roundness: isSelfLoop ? 0.6 : 0.4,
           },
-          font: { align: "top" },
+          font: { align: "horizontal" },
           physics: true,
           length: transitionLength,
         });
@@ -319,7 +319,10 @@ function renderGraph() {
   const options = {
     nodes: {
       shape: "circle",
-      font: { size: 16 },
+      font: {
+        face: "cambria math",
+        size: 25,
+      },
       margin: 10,
     },
     edges: {
@@ -333,8 +336,11 @@ function renderGraph() {
         enabled: true,
         type: "dynamic",
       },
-      color: { color: "black" },
-      font: { size: 10 },
+      color: { color: "white" },
+      font: {
+        face: "cambria math",
+        size: 35,
+      },
     },
     layout: {
       hierarchical: false,
@@ -353,6 +359,13 @@ function renderGraph() {
         springLength: 250,
         springConstant: 0.08,
         avoidOverlap: 0.5,
+      },
+      stabilization: {
+        enabled: true,
+        iterations: 1000,
+        updateInterval: 100,
+        onlyDynamicEdges: false,
+        fit: true,
       },
     },
   };
@@ -458,6 +471,7 @@ function simulateWithAnimation(input) {
           "result"
         ).textContent = `ε-transition: ${from} → ${to}`;
 
+        // Update the graph visualization to highlight the epsilon transition
         renderGraphWithMultiStateHighlight([from], [to], "ε");
 
         // Next epsilon transition after delay
@@ -465,7 +479,6 @@ function simulateWithAnimation(input) {
           animateEpsilonTransitions(pathIndex + 1);
         }, 1000);
       }
-
       // If no epsilon transitions, directly process symbol
       if (epsilonPath.length === 0) {
         processSymbol(closureStates);
@@ -559,13 +572,16 @@ function renderGraphWithMultiStateHighlight(
       id: state,
       label: state,
       shape: "circle",
+      font: {
+        size: 25,
+      },
       color: {
         // Highlight current states in yellow
         background: currentStates.includes(state)
-          ? "yellow"
+          ? "#ffe399"
           : // Highlight next states in orange
           nextStates.includes(state)
-          ? "orange"
+          ? "#ff9b0b"
           : // Highlight start state in blue
           state === automaton.startState
           ? "#a2d2ff"
@@ -590,9 +606,11 @@ function renderGraphWithMultiStateHighlight(
           : 20,
       // Increase border width of accept states
       borderWidth: automaton.acceptStates.has(state) ? 4 : 2,
+      margin: 10,
     });
   });
 
+  // Add edges for transitions
   // Add edges for transitions
   for (const sourceState in automaton.transitions) {
     for (const symbol in automaton.transitions[sourceState]) {
@@ -603,9 +621,12 @@ function renderGraphWithMultiStateHighlight(
 
       destinations.forEach((targetState) => {
         const isActiveTransition =
-          currentStates.includes(sourceState) &&
-          nextStates.includes(targetState) &&
-          symbol === transitionSymbol;
+          (currentStates.includes(sourceState) &&
+            nextStates.includes(targetState) &&
+            symbol === transitionSymbol) ||
+          (symbol === "ε" &&
+            currentStates.includes(sourceState) &&
+            nextStates.includes(targetState));
 
         edges.push({
           from: sourceState,
@@ -619,7 +640,11 @@ function renderGraphWithMultiStateHighlight(
           // Increase width of highlighted transitions
           width: isActiveTransition ? 3 : 1,
           smooth: { type: "continuous", roundness: 0.4 },
-          font: { align: "top" },
+          font: {
+            size: 35,
+            face: "times",
+            align: "horizontal",
+          },
         });
       });
     }
@@ -631,6 +656,13 @@ function renderGraphWithMultiStateHighlight(
     edges: new vis.DataSet(edges),
   };
 
+  const options = {
+    physics: {
+      enabled: false,
+    },
+  };
+
+  network.setOptions(options);
   network.setData(graphData);
 }
 // Modify the existing simulate button to use animation
