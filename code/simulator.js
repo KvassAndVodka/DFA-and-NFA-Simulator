@@ -120,56 +120,64 @@ function addTransition() {
  * Updates the state list UI with the current states of the automaton.
  */
 function updateStateList() {
-  const stateListElement = document.getElementById("stateList");
-  stateListElement.innerHTML = "";
+  const stateTableBody = document.querySelector("#stateTable tbody");
+  stateTableBody.innerHTML = ""; // Clear existing rows
 
-  // Iterate over the states of the automaton
-  for (const state of automaton.states) {
-    // Create a list item for each state
-    const listItem = document.createElement("li");
-    listItem.textContent = [
-      state,
-      state === automaton.startState ? "(Start)" : "",
-      automaton.acceptStates.has(state) ? "(Accept)" : "",
-    ]
-      .filter((text) => !!text)
-      .join(" ");
-    // Add the list item to the state list UI
-    stateListElement.appendChild(listItem);
-  }
+  automaton.states.forEach((state) => {
+    const row = document.createElement("tr");
+
+    const stateCell = document.createElement("td");
+    stateCell.textContent = state;
+
+    const typeCell = document.createElement("td");
+    const types = [];
+    if (state === automaton.startState) types.push("Start");
+    if (automaton.acceptStates.has(state)) types.push("Accept");
+    typeCell.textContent = types.join(", ") || "Normal";
+
+    row.appendChild(stateCell);
+    row.appendChild(typeCell);
+
+    stateTableBody.appendChild(row);
+  });
 }
+
 
 /**
  * Updates the transition list UI with the current transitions of the automaton.
  */
 function updateTransitionList() {
-  // Get the transition list element from the DOM
-  const transitionListElement = document.getElementById("transitionList");
+  const transitionTableBody = document.querySelector("#transitionTable tbody");
+  transitionTableBody.innerHTML = ""; // Clear existing rows
 
-  // Clear existing transition list entries
-  transitionListElement.innerHTML = "";
+  for (const fromState in automaton.transitions) {
+    for (const symbol in automaton.transitions[fromState]) {
+      const toStates = Array.isArray(automaton.transitions[fromState][symbol])
+        ? automaton.transitions[fromState][symbol]
+        : [automaton.transitions[fromState][symbol]];
 
-  // Iterate over each source state in the automaton's transitions
-  for (const sourceState in automaton.transitions) {
-    // Iterate over each transition symbol for the current source state
-    for (const transitionSymbol in automaton.transitions[sourceState]) {
-      // Retrieve the destination states for the current source state and symbol
-      const destinationStates =
-        automaton.transitions[sourceState][transitionSymbol];
+      toStates.forEach((toState) => {
+        const row = document.createElement("tr");
 
-      // Create a list item element to represent the transition
-      const listItem = document.createElement("li");
-      listItem.textContent = `${sourceState} --${transitionSymbol}--> ${
-        Array.isArray(destinationStates)
-          ? destinationStates.join(", ")
-          : destinationStates
-      }`;
+        const fromCell = document.createElement("td");
+        fromCell.textContent = fromState;
 
-      // Append the list item to the transition list element in the UI
-      transitionListElement.appendChild(listItem);
+        const symbolCell = document.createElement("td");
+        symbolCell.textContent = symbol;
+
+        const toCell = document.createElement("td");
+        toCell.textContent = toState;
+
+        row.appendChild(fromCell);
+        row.appendChild(symbolCell);
+        row.appendChild(toCell);
+
+        transitionTableBody.appendChild(row);
+      });
     }
   }
 }
+
 
 /**
  * Renders the automaton graph using vis.js library.
