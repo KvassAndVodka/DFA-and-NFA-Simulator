@@ -13,16 +13,16 @@ header {
   top: 0;
   z-index: 1000;
 }
-  header h1 {
-    margin: 0;
-    font-size: 1.8rem; /* Adjust font size */
-    color: #ffffff; /* Ensure text stands out against gradient */  }
+/* Header Styling */
+header h1 {
+  margin: 0;
+  font-size: 1.8rem; /* Adjust font size */
+  color: #ffffff; /* Ensure text stands out against gradient */
+}
 
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 300;
 }
 
 /* Main Layout */
@@ -33,9 +33,10 @@ body {
 
 /* Sidebar Styling */ /*#0c0d0f*/
 #sidebar-left {
-  background-color: #22262d;
+  background-color: #0c0d0f;
   height: 100vh;
   overflow-y: auto;
+  font-weight: 300;
 }
 
 #sidebar-button{
@@ -43,62 +44,36 @@ body {
   color: #ffffff;
   border: none;
   transition: background 0.3s ease, transform 0.2s ease; /* Smooth transition for hover effect */
+  padding: 10px;
+  font-size: 18px;
+  width: auto;
+  height: auto;
+  margin-bottom: 50px;
 } #sidebar-button:hover{
   cursor: pointer;
   background: linear-gradient(0deg, #921131, #BF1641);
   transform: scale(1.05); /* Slightly increase size for visual feedback */
+}#sidebar-left h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700; /* Bold weight */
 }
 
-#stateName{
+/* Text input styles */
+#stateName, #fromState, #symbol, #toState, #testString {
   border: none;
   background-color: #141416;
   color: #ffffff;
-}#stateName::placeholder {
-    color: #515151;
-    opacity: 1;
-  }
+}
 
-#fromState{
-  border: none;
-  background-color: #141416;
-  color: #ffffff;
-}#fromState::placeholder {
-    color: #515151;
-    opacity: 1;
-  }
+#stateName::placeholder, #fromState::placeholder, #symbol::placeholder, #toState::placeholder, #testString::placeholder {
+  color: #606060;
+  opacity: 1;
+}
 
-#symbol{
-    border: none;
-    background-color: #141416;
-    color: #ffffff;
-  }#symbol::placeholder {
-      color: #515151;
-      opacity: 1;
-    }
-
-#toState{
-    border: none;
-    background-color: #141416;
-    color: #ffffff;
-  }#toState::placeholder {
-      color: #515151;
-      opacity: 1;
-    }
-
-#testString{
-    border: none;
-    background-color: #141416;
-    color: #ffffff;
-  }#testString::placeholder {
-      color: #515151;
-      opacity: 1;
-    }
-
-    
 /* Graph/Network Section */
 #network {
+  margin: 10px;
   flex-grow: 1;
-  padding: 10px;
   height: 600px;
   background-color: #343434;
   border-radius: 4px;
@@ -109,8 +84,9 @@ body {
   color: white;
   border-radius: 4px;
   padding: 10px;
+  margin: 10px;
   margin-top: 25px;
-  height: 4%;
+  height: 45px;
 }
 
 #footer{
