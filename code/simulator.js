@@ -18,10 +18,23 @@ function initializeAutomaton() {
       throw new Error(`Unknown automaton type: ${selectedType}`);
   }
 
-  document.getElementById("stateList").innerHTML = "";
-  document.getElementById("transitionList").innerHTML = "";
-  document.getElementById("result").textContent = `Initialized ${selectedType}`;
-  renderGraph(); // Initialize graph when automaton is initialized
+  // Reset all elements on the screen
+  const stateListElement = document.getElementById("stateList");
+  if (stateListElement) {
+    stateListElement.innerHTML = "";
+  }
+  const transitionListElement = document.getElementById("transitionList");
+  if (transitionListElement) {
+    transitionListElement.innerHTML = "";
+  }
+  document.getElementById("result").textContent = "";
+  document.getElementById("testString").value = "";
+  resetStateForm();
+
+  // Call update functions directly
+  updateStateList();
+  updateTransitionList();
+  renderGraph();
 }
 
 /**
@@ -135,17 +148,23 @@ function updateStateList() {
     if (automaton.acceptStates.has(state)) types.push("Accept");
     typeCell.textContent = types.join(", ") || "Normal";
 
+    const deleteCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.onclick = () => {
+      // Call a function to remove the state from the automaton
+      removeState(state);
+    };
+    deleteCell.appendChild(deleteButton);
+
     row.appendChild(stateCell);
     row.appendChild(typeCell);
+    row.appendChild(deleteCell);
 
     stateTableBody.appendChild(row);
   });
 }
 
-
-/**
- * Updates the transition list UI with the current transitions of the automaton.
- */
 function updateTransitionList() {
   const transitionTableBody = document.querySelector("#transitionTable tbody");
   transitionTableBody.innerHTML = ""; // Clear existing rows
@@ -168,9 +187,19 @@ function updateTransitionList() {
         const toCell = document.createElement("td");
         toCell.textContent = toState;
 
+        const deleteCell = document.createElement("td");
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.onclick = () => {
+          // Call a function to remove the transition from the automaton
+          removeTransition(fromState, symbol, toState);
+        };
+        deleteCell.appendChild(deleteButton);
+
         row.appendChild(fromCell);
         row.appendChild(symbolCell);
         row.appendChild(toCell);
+        row.appendChild(deleteCell);
 
         transitionTableBody.appendChild(row);
       });
@@ -178,6 +207,36 @@ function updateTransitionList() {
   }
 }
 
+function removeState(state) {
+  if (automaton.states.has(state)) {
+    automaton.states.delete(state);
+  }
+  updateStateList();
+  updateTransitionList(); // Update transition list to remove transitions related to the deleted state
+  renderGraph(); // Update the graph
+}
+
+function removeTransition(fromState, symbol, toState) {
+  if (
+    automaton.transitions[fromState] &&
+    automaton.transitions[fromState][symbol]
+  ) {
+    const toStates = Array.isArray(automaton.transitions[fromState][symbol])
+      ? automaton.transitions[fromState][symbol]
+      : [automaton.transitions[fromState][symbol]];
+    automaton.transitions[fromState][symbol] = toStates.filter(
+      (s) => s !== toState
+    );
+    if (automaton.transitions[fromState][symbol].length === 0) {
+      delete automaton.transitions[fromState][symbol];
+    }
+    if (Object.keys(automaton.transitions[fromState]).length === 0) {
+      delete automaton.transitions[fromState];
+    }
+  }
+  updateTransitionList();
+  renderGraph(); // Update the graph
+}
 
 /**
  * Renders the automaton graph using vis.js library.
@@ -198,11 +257,16 @@ function renderGraph() {
       color: {
         background:
           state === automaton.startState
-            ? "blue" // Highlight start state
+            ? "#a2d2ff" // Highlight start state
             : automaton.acceptStates.has(state)
-            ? "green" // Highlight accept states
-            : "white", // Regular state
-        border: "black",
+            ? "#4FFFB0" // Highlight accept states
+            : "#caf0f8", // Regular state
+        border:
+          state === automaton.startState
+            ? "blue"
+            : automaton.acceptStates.has(state)
+            ? "green"
+            : "white",
       },
       size: automaton.acceptStates.has(state) ? 30 : 20, // Larger size for accept states
       borderWidth: automaton.acceptStates.has(state) ? 4 : 2, // Thicker border for accept states
@@ -232,7 +296,7 @@ function renderGraph() {
           to: toState,
           label: symbol,
           arrows: "to",
-          color: { color: "black" },
+          color: { color: "white" },
           smooth: {
             type: isSelfLoop ? "cubicBezier" : "continuous",
             roundness: isSelfLoop ? 0.6 : 0.4,
@@ -504,13 +568,18 @@ function renderGraphWithMultiStateHighlight(
           ? "orange"
           : // Highlight start state in blue
           state === automaton.startState
-          ? "blue"
+          ? "#a2d2ff"
           : // Highlight accept states in green
           automaton.acceptStates.has(state)
-          ? "green"
+          ? "#caf0f8"
           : // All other states are white
-            "white",
-        border: "black",
+            "#caf0f8",
+        border:
+          state === automaton.startState
+            ? "blue"
+            : automaton.acceptStates.has(state)
+            ? "green"
+            : "white",
       },
       // Increase size of highlighted states
       size:
@@ -545,7 +614,7 @@ function renderGraphWithMultiStateHighlight(
           arrows: "to",
           color: {
             // Highlight active transitions in red
-            color: isActiveTransition ? "red" : "black",
+            color: isActiveTransition ? "red" : "white",
           },
           // Increase width of highlighted transitions
           width: isActiveTransition ? 3 : 1,
@@ -569,6 +638,5 @@ function simulate() {
   const testString = document.getElementById("testString").value.trim();
   simulateWithAnimation(testString);
 }
-
 // Initialize automaton to DFA by default
 initializeAutomaton();
