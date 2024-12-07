@@ -7,7 +7,8 @@
 
     <!-- Bootstrap CSS -->
     <link
-      rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     />
 
     <!-- Include your external CSS file -->
@@ -16,18 +17,21 @@
     <!-- Include Vis.js -->
     <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
   </head>
 
   <body>
     <!-- Header Section -->
-    <header >
+    <header>
       <div class="container d-flex justify-content-between">
         <h1>DFA and NFA Simulator</h1>
         <div>
-          <label for="automatonType" class="me-1 ">Choose Automaton Type:</label>
+          <label for="automatonType" class="me-1">Choose Automaton Type:</label>
           <select
             id="automatonType"
             class="form-select d-inline-block w-auto"
@@ -73,37 +77,38 @@
           </div>
 
           <div>
-            <h2>Add Transitions</h2>
-              <input
-                type="text"
-                id="fromState"
-                class="form-control mb-2"
-                placeholder="From State"
-              />
-              <input
-                type="text"
-                id="symbol"
-                class="form-control mb-2"
-                placeholder="Symbol"
-              />
-              <input
-                type="text"
-                id="toState"
-                class="form-control mb-2"
-                placeholder="To State (comma-separated for NFA)"
-              />
-              <button id="sidebar-button" onclick="addTransition()">
-                Add Transition
-              </button> 
+            <h3>Add Transitions</h3>
+            <input
+              type="text"
+              id="fromState"
+              class="form-control mb-2"
+              placeholder="From State"
+            />
+            <input
+              type="text"
+              id="symbol"
+              class="form-control mb-2"
+              placeholder="Symbol"
+            />
+            <input
+              type="text"
+              id="toState"
+              class="form-control mb-2"
+              placeholder="To State (comma-separated for NFA)"
+            />
+            <button id="sidebar-button" onclick="addTransition()">
+              Add Transition
+            </button>
           </div>
 
           <div>
-            <h2 class="mt-4">States</h2>
+            <h3 class="mt-4">States</h3>
             <table class="table table-bordered text-white" id="stateTable">
               <thead>
                 <tr>
                   <th>State</th>
                   <th>Type</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -111,21 +116,25 @@
           </div>
 
           <div>
-            <h2 class="mt-4">Transitions</h2>
-            <table class="table table-striped table-bordered text-white" id="transitionTable">
+            <h3 class="mt-4">Transitions</h3>
+            <table
+              class="table table-striped table-bordered text-white"
+              id="transitionTable"
+            >
               <thead>
                 <tr>
                   <th>From</th>
                   <th>Symbol</th>
                   <th>To</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody></tbody>
-            </table> 
+            </table>
           </div>
-          
+
           <div>
-            <h2 class="mt-4">Test String</h2>
+            <h3 class="mt-4">Test String</h3>
             <input
               type="text"
               id="testString"
@@ -136,7 +145,6 @@
               Animate Simulation
             </button>
           </div>
-
         </aside>
 
         <!-- Main Graph Display -->

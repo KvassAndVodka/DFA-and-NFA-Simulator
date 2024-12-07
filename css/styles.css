@@ -13,12 +13,14 @@ header {
 /* Header Styling */
 header h1 {
   margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-weight: bold;
   font-size: 1.8rem; /* Adjust font size */
   color: #ffffff; /* Ensure text stands out against gradient */
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 300;
 }
 
@@ -36,8 +38,8 @@ body {
   font-weight: 300;
 }
 
-#sidebar-button{
-  background: linear-gradient(0deg, #21212A, #2D2D39);
+#sidebar-button {
+  background: linear-gradient(0deg, #21212a, #2d2d39);
   color: #ffffff;
   border: none;
   transition: background 0.3s ease, transform 0.2s ease; /* Smooth transition for hover effect */
@@ -46,23 +48,33 @@ body {
   width: auto;
   height: auto;
   margin-bottom: 50px;
-} #sidebar-button:hover{
+}
+#sidebar-button:hover {
   cursor: pointer;
-  background: linear-gradient(0deg, #921131, #BF1641);
+  background: linear-gradient(90deg, #332f97, #2a2950);
   transform: scale(1.05); /* Slightly increase size for visual feedback */
-}#sidebar-left h2 {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700; /* Bold weight */
+}
+#sidebar-left h3 {
+  font-family: "Poppins", sans-serif;
+  font-weight: bold; /* Bold weight */
 }
 
 /* Text input styles */
-#stateName, #fromState, #symbol, #toState, #testString {
+#stateName,
+#fromState,
+#symbol,
+#toState,
+#testString {
   border: none;
   background-color: #141416;
   color: #ffffff;
 }
 
-#stateName::placeholder, #fromState::placeholder, #symbol::placeholder, #toState::placeholder, #testString::placeholder {
+#stateName::placeholder,
+#fromState::placeholder,
+#symbol::placeholder,
+#toState::placeholder,
+#testString::placeholder {
   color: #606060;
   opacity: 1;
 }
@@ -72,11 +84,11 @@ body {
   margin: 10px;
   flex-grow: 1;
   height: 600px;
-  background-color: #343434;
+  background-color: #201f3d;
   border-radius: 4px;
 }
 
-#result{
+#result {
   background-color: #343434;
   color: white;
   border-radius: 4px;
@@ -86,7 +98,7 @@ body {
   height: 45px;
 }
 
-#footer{
+#footer {
   position: fixed;
 }
 
