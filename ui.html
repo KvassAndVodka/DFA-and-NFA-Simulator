@@ -45,7 +45,7 @@
       <div class="row">
         <!-- Left Sidebar for States and Transitions -->
         <aside
-          class="col-md-2 text-white p-3"
+          class="col-md-3 text-white p-3"
           id="sidebar-left"
         >
           <div>
@@ -56,16 +56,17 @@
                 class="form-control mb-2"
                 placeholder="State Name"
               />
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="startState" />
-                <label class="form-check-label" for="startState">Start State</label>
+              <div class="d-flex align-items-center gap-3">
+                <div class="form-check custom-checkbox">
+                  <input type="checkbox" class="form-check-input" id="startState" />
+                  <label class="form-check-label" for="startState">Start State</label>
+                </div>
+                <div class="form-check custom-checkbox">
+                  <input type="checkbox" class="form-check-input" id="acceptState" />
+                  <label class="form-check-label" for="acceptState">Accept State</label>
+                </div>
               </div>
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="acceptState" />
-                <label class="form-check-label" for="acceptState"
-                  >Accept State</label
-                >
-              </div>
+
               <button id="sidebar-button" onclick="addState()">
                 Add State
               </button>
@@ -139,7 +140,7 @@
         </aside>
 
         <!-- Main Graph Display -->
-        <main id="main-container"class="col-md-10 p-3">
+        <main id="main-container"class="col-md-9 p-3">
           <div id="network"></div>
           <div id="result"></div>
         </main>
