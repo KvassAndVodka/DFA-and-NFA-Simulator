@@ -1,6 +1,5 @@
 let automaton;
 let network;
-
 /**
  * Initialize an automaton instance (DFA or NFA) based on user selection.
  */
@@ -30,11 +29,25 @@ function initializeAutomaton() {
   document.getElementById("result").textContent = "";
   document.getElementById("testString").value = "";
   resetStateForm();
+  
+  // Initialize nodes and edges as empty DataSets
+  nodes = new vis.DataSet();  // Empty DataSet for nodes
+  edges = new vis.DataSet();   // Empty DataSet for edges
+  edgeOffsets = {}; // To handle edge offsets for self-loops
+
+  // Prepare data object for vis.Network
+  const data = {
+    nodes: nodes,
+    edges: edges,
+  };
+  var options = {};
+   // Initialize the network
+   const container = document.getElementById("network");
+   network = new vis.Network(container, data, options);
 
   // Call update functions directly
   updateStateList();
   updateTransitionList();
-  renderGraph();
 }
 
 /**
@@ -58,12 +71,35 @@ function addState() {
   // Update the result display
   document.getElementById("result").textContent = `State ${stateName} added.`;
 
-  // Reset the state form to its original state
+  // Add the state as a node in the graph
+  nodes.add({
+    id: stateName, // Use stateName as the ID
+    label: stateName,
+    shape: "circle",
+    color: {
+      background:
+        isStartState
+          ? "#a2d2ff" // Highlight start state
+          : isAcceptState
+          ? "#4FFFB0" // Highlight accept states
+          : "#caf0f8", // Regular state
+      border:
+        isStartState
+          ? "blue"
+          : isAcceptState
+          ? "green"
+          : "white",
+    },
+    physics: false,
+    size: isAcceptState ? 30 : 20, // Larger size for accept states
+    borderWidth: isAcceptState ? 4 : 2, // Thicker border for accept states
+  });
+
+  // // Reset the state form to its original state
   resetStateForm();
 
-  // Re-render the graph with the new state
-  renderGraph();
 }
+
 
 /**
  * Resets the state form to its original state.
@@ -125,8 +161,52 @@ function addTransition() {
   document.getElementById("symbol").value = "";
   document.getElementById("toState").value = "";
 
-  // Re-render the graph with the new transition
-  renderGraph();
+  // Handle self-loop
+  const isSelfLoop = fromState === toStateInput;
+  
+  // Initialize edge offset for self-loop handling
+  if (!edgeOffsets[fromState]) edgeOffsets[fromState] = {};
+  if (!edgeOffsets[fromState][toStateInput])
+    edgeOffsets[fromState][toStateInput] = 0;
+
+  const offset = edgeOffsets[fromState][toStateInput]++;
+  const transitionLength = isSelfLoop ? 250 + offset * 100 : 250;
+
+  // Add edge(s) for NFA transitions
+  if (isNFA) {
+    toStates.forEach((state) => {
+      edges.add({
+        from: fromState,
+        to: state,
+        label: transitionSymbol,
+        arrows: "to",
+        color: { color: "white" },
+        smooth: {
+          type: isSelfLoop ? "cubicBezier" : "continuous",
+          roundness: isSelfLoop ? 0.6 : 0.4,
+        },
+        font: { align: "horizontal" },
+        physics: false,
+        length: transitionLength,
+      });
+    });
+  } else {
+    // For DFA, only one 'toState'
+    edges.add({
+      from: fromState,
+      to: targetState,
+      label: transitionSymbol,
+      arrows: "to",
+      color: { color: "white" },
+      smooth: {
+        type: isSelfLoop ? "cubicBezier" : "continuous",
+        roundness: isSelfLoop ? 0.6 : 0.4,
+      },
+      font: { align: "horizontal" },
+      physics: false,
+      length: transitionLength,
+    });
+  }
 }
 
 /**
@@ -210,17 +290,15 @@ function updateTransitionList() {
 function removeState(state) {
   if (automaton.states.has(state)) {
     automaton.states.delete(state);
+    nodes.remove({ id: state });
   }
+
   updateStateList();
   updateTransitionList(); // Update transition list to remove transitions related to the deleted state
-  renderGraph(); // Update the graph
 }
 
 function removeTransition(fromState, symbol, toState) {
-  if (
-    automaton.transitions[fromState] &&
-    automaton.transitions[fromState][symbol]
-  ) {
+  if (automaton.transitions[fromState] && automaton.transitions[fromState][symbol]) {
     const toStates = Array.isArray(automaton.transitions[fromState][symbol])
       ? automaton.transitions[fromState][symbol]
       : [automaton.transitions[fromState][symbol]];
@@ -234,159 +312,29 @@ function removeTransition(fromState, symbol, toState) {
       delete automaton.transitions[fromState];
     }
   }
-  updateTransitionList();
-  renderGraph(); // Update the graph
-}
 
-/**
- * Renders the automaton graph using vis.js library.
- * This function creates and updates the visual representation of the automaton,
- * including its states as nodes and transitions as edges.
- */
-function renderGraph() {
-  const nodes = [];
-  const edges = [];
-  const edgeOffsets = {}; // To handle edge offsets for self-loops
-
-  // Add states as nodes with specific styling
-  automaton.states.forEach((state) => {
-    nodes.push({
-      id: state,
-      label: state,
-      shape: "circle",
-      color: {
-        background:
-          state === automaton.startState
-            ? "#a2d2ff" // Highlight start state
-            : automaton.acceptStates.has(state)
-            ? "#4FFFB0" // Highlight accept states
-            : "#caf0f8", // Regular state
-        border:
-          state === automaton.startState
-            ? "blue"
-            : automaton.acceptStates.has(state)
-            ? "green"
-            : "white",
-      },
-      size: automaton.acceptStates.has(state) ? 30 : 20, // Larger size for accept states
-      borderWidth: automaton.acceptStates.has(state) ? 4 : 2, // Thicker border for accept states
-    });
+  // Remove the edge from the vis.js network
+  const edgesToRemove = edges.get({
+    filter: (edge) =>
+      edge.from === fromState &&
+      edge.to === toState &&
+      edge.label === symbol,
   });
 
-  // Add transitions as directed edges
-  for (const fromState in automaton.transitions) {
-    for (const symbol in automaton.transitions[fromState]) {
-      const toStates = Array.isArray(automaton.transitions[fromState][symbol])
-        ? automaton.transitions[fromState][symbol]
-        : [automaton.transitions[fromState][symbol]];
+  // Remove each matching edge
+  edgesToRemove.forEach(edge => {
+    edges.remove(edge);
+  });
 
-      toStates.forEach((toState) => {
-        const isSelfLoop = fromState === toState;
-
-        // Initialize edge offset for self-loop handling
-        if (!edgeOffsets[fromState]) edgeOffsets[fromState] = {};
-        if (!edgeOffsets[fromState][toState])
-          edgeOffsets[fromState][toState] = 0;
-
-        const offset = edgeOffsets[fromState][toState]++;
-        const transitionLength = isSelfLoop ? 250 + offset * 100 : 250;
-
-        edges.push({
-          from: fromState,
-          to: toState,
-          label: symbol,
-          arrows: "to",
-          color: { color: "white" },
-          smooth: {
-            type: isSelfLoop ? "cubicBezier" : "continuous",
-            roundness: isSelfLoop ? 0.6 : 0.4,
-          },
-          font: { align: "horizontal" },
-          physics: true,
-          length: transitionLength,
-        });
-      });
-    }
-  }
-
-  // Prepare data for the network
-  const data = {
-    nodes: new vis.DataSet(nodes),
-    edges: new vis.DataSet(edges),
-  };
-
-  // Configure the network options
-  const options = {
-    nodes: {
-      shape: "circle",
-      font: {
-        face: "cambria math",
-        size: 25,
-      },
-      margin: 10,
-    },
-    edges: {
-      arrows: {
-        to: {
-          enabled: true,
-          type: "arrow",
-        },
-      },
-      smooth: {
-        enabled: true,
-        type: "dynamic",
-      },
-      color: { color: "white" },
-      font: {
-        face: "cambria math",
-        size: 35,
-      },
-    },
-    layout: {
-      hierarchical: false,
-      improvedLayout: true,
-    },
-    physics: {
-      enabled: true,
-      barnesHut: {
-        gravitationalConstant: -2000,
-        centralGravity: 0.1,
-        springLength: 250,
-      },
-      forceAtlas2Based: {
-        gravitationalConstant: -1000,
-        centralGravity: 0.01,
-        springLength: 250,
-        springConstant: 0.08,
-        avoidOverlap: 0.5,
-      },
-      stabilization: {
-        enabled: true,
-        iterations: 1000,
-        updateInterval: 100,
-        onlyDynamicEdges: false,
-        fit: true,
-      },
-    },
-  };
-
-  // Initialize or update the network
-  if (!network) {
-    const container = document.getElementById("network");
-    network = new vis.Network(container, data, options);
-  } else {
-    network.setData(data);
-  }
+  updateTransitionList();
 }
+
 
 function simulateWithAnimation(input) {
   if (!automaton) {
     alert("Automaton not initialized.");
     return;
   }
-
-  // Reset graph to initial state
-  renderGraph();
 
   // Improved Epsilon Closure function
   function getEpsilonClosure(initialStates) {
