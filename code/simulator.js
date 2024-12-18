@@ -301,6 +301,8 @@ function updateTransitionList() {
 
 function removeState(state) {
   if (automaton.states.has(state)) {
+    automaton.acceptStates.delete(state);
+    automaton.startState = null;
     automaton.states.delete(state);
     nodes.remove({ id: state });
   }
@@ -314,14 +316,14 @@ function removeTransition(fromState, symbol, toState) {
     const toStates = Array.isArray(automaton.transitions[fromState][symbol])
       ? automaton.transitions[fromState][symbol]
       : [automaton.transitions[fromState][symbol]];
-    automaton.transitions[fromState][symbol] = toStates.filter(
-      (s) => s !== toState
-    );
-    if (automaton.transitions[fromState][symbol].length === 0) {
+    const filteredToStates = toStates.filter((s) => s !== toState);
+    if (filteredToStates.length === 0) {
       delete automaton.transitions[fromState][symbol];
-    }
-    if (Object.keys(automaton.transitions[fromState]).length === 0) {
-      delete automaton.transitions[fromState];
+      if (Object.keys(automaton.transitions[fromState]).length === 0) {
+        delete automaton.transitions[fromState];
+      }
+    } else {
+      automaton.transitions[fromState][symbol] = filteredToStates;
     }
   }
 
@@ -339,6 +341,50 @@ function removeTransition(fromState, symbol, toState) {
   });
 
   updateTransitionList();
+}
+
+/**
+ * Resets the node and edge colors to their default states.
+ */
+function resetGraphColors() {
+  // Reset nodes to default color
+  const networkNodes = network.body.data.nodes;
+  networkNodes.forEach((node) => {
+    const state = node.id;
+
+    let backgroundColor = "#caf0f8"; // Default color
+    let borderColor = "black"; // Default border color
+    if (state === automaton.startState) {
+      backgroundColor = "#a2d2ff"; // Light blue for start state
+      borderColor = "blue"; // Blue border for start state
+    } else if (automaton.acceptStates.has(state)) {
+      backgroundColor = "#4FFFB0"; // Green for accept states
+      borderColor = "green"; // Green border for accept states
+    }
+
+    // Reset node properties
+    networkNodes.update({
+      id: state,
+      color: {
+        background: backgroundColor,
+        border: borderColor,
+      },
+      borderWidth: automaton.acceptStates.has(state) ? 4 : 2,
+      size: automaton.acceptStates.has(state) ? 30 : 20,
+    });
+  });
+
+  // Reset edges to default color
+  const networkEdges = network.body.data.edges;
+  networkEdges.forEach((edge) => {
+    networkEdges.update({
+      id: edge.id,
+      color: {
+        color: "#848484", // Gray color for edges
+      },
+      width: 1, // Default width
+    });
+  });
 }
 
 
@@ -384,6 +430,7 @@ function simulateWithAnimation(input) {
       ? "Accepted (Empty String)"
       : "Rejected (Empty String)";
     renderGraphWithMultiStateHighlight(closureStates, [], "ε");
+    resetGraphColors(); // Reset graph colors after simulation
     return;
   }
 
@@ -398,6 +445,7 @@ function simulateWithAnimation(input) {
       document.getElementById("result").textContent = isAccepted
         ? "Accepted"
         : "Rejected";
+      resetGraphColors(); // Reset graph colors after simulation
       return;
     }
 
@@ -407,23 +455,22 @@ function simulateWithAnimation(input) {
       const { closureStates, epsilonPath } = getEpsilonClosure(currentStates);
 
       function animateEpsilonTransitions(pathIndex = 0) {
-  if (pathIndex >= epsilonPath.length) {
-    processSymbol(closureStates); // Proceed to process the next symbol after all epsilon animations
-    return;
-  }
+        if (pathIndex >= epsilonPath.length) {
+          processSymbol(closureStates); // Proceed to process the next symbol after all epsilon animations
+          return;
+        }
 
-  const { from, to } = epsilonPath[pathIndex];
+        const { from, to } = epsilonPath[pathIndex];
 
-  // Display the transition and render the graph
-  document.getElementById("result").textContent = `ε-transition: ${from} → ${to}`;
-  renderGraphWithMultiStateHighlight([from], [to], "ε");
+        // Display the transition and render the graph
+        document.getElementById("result").textContent = `ε-transition: ${from} → ${to}`;
+        renderGraphWithMultiStateHighlight([from], [to], "ε");
 
-  // Introduce a delay before proceeding to the next epsilon transition
-  setTimeout(() => {
-    animateEpsilonTransitions(pathIndex + 1);
-  }, 1000); // 1-second delay for each epsilon transition
-}
-
+        // Introduce a delay before proceeding to the next epsilon transition
+        setTimeout(() => {
+          animateEpsilonTransitions(pathIndex + 1);
+        }, 1000); // 1-second delay for each epsilon transition
+      }
 
       animateEpsilonTransitions();
     }
@@ -446,6 +493,7 @@ function simulateWithAnimation(input) {
 
       if (nextStates.length === 0) {
         document.getElementById("result").textContent = `Rejected: No transition for ${symbol} from states ${closureStates.join(", ")}`;
+        resetGraphColors(); // Reset graph colors on rejection
         return;
       }
 
@@ -466,6 +514,7 @@ function simulateWithAnimation(input) {
 
   animateStep();
 }
+
 
 
 /**
@@ -540,6 +589,8 @@ function renderGraphWithMultiStateHighlight(currentStates, nextStates, transitio
     });
   });
 }
+
+
 
 // Modify the existing simulate button to use animation
 function simulate() {
