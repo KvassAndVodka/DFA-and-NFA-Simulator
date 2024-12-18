@@ -529,7 +529,8 @@ function simulateWithAnimation(input) {
       } = getEpsilonClosure(nextStates);
   
       // Display the transition information and render the graph
-      document.getElementById("result").textContent = `Processing symbol: ${symbol} (States: ${nextClosureStates.join(", ")})`;
+      document.getElementById("result").textContent = `Processing Symbols "${symbol}": ${closureStates.join(", ")} → ${nextClosureStates.join(", ")}`;
+      console.log(`Processing Symbols: ${closureStates.join(", ")} → ${nextClosureStates.join(", ")}`);      
       highlightState(closureStates, nextClosureStates, symbol, nextClosureTransitions);
   
       // Update current states with the closure states
