@@ -5,11 +5,13 @@ let network;
 function initializeAutomaton() {
   const selectedType = document.getElementById("automatonType").value;
 
-  switch (selectedType) {               // Dropdown sa HTML, choose between NFA or DFA
+  switch (
+    selectedType // Dropdown sa HTML, choose between NFA or DFA
+  ) {
     case "DFA":
-      automaton = new DFA();            // New instance DFA.js
+      automaton = new DFA(); // New instance DFA.js
       break;
-    case "NFA":                         // New instance NFA.js
+    case "NFA": // New instance NFA.js
       automaton = new NFA();
       break;
     default:
@@ -17,8 +19,9 @@ function initializeAutomaton() {
   }
 
   // Reset all elements on the screen
-  const stateListElement = document.getElementById("stateList");        // WHY RESET???
-  if (stateListElement) {                                               // BRUH, different FSM, reset data, less hassle
+  const stateListElement = document.getElementById("stateList"); // WHY RESET???
+  if (stateListElement) {
+    // BRUH, different FSM, reset data, less hassle
     stateListElement.innerHTML = "";
   }
   const transitionListElement = document.getElementById("transitionList");
@@ -28,11 +31,11 @@ function initializeAutomaton() {
   document.getElementById("result").textContent = "";
   document.getElementById("testString").value = "";
   resetStateForm();
-  
+
   // Initialize nodes and edges as empty DataSets
-  nodes = new vis.DataSet();            // Empty DataSet for nodes
-  edges = new vis.DataSet();            // Empty DataSet for edges
-  edgeOffsets = {};                     // To handle edge offsets for self-loops
+  nodes = new vis.DataSet(); // Empty DataSet for nodes
+  edges = new vis.DataSet(); // Empty DataSet for edges
+  edgeOffsets = {}; // To handle edge offsets for self-loops
 
   // Prepare data object for vis.Network
   const data = {
@@ -40,9 +43,9 @@ function initializeAutomaton() {
     edges: edges,
   };
   var options = {};
-   // Initialize the network
-   const container = document.getElementById("network");
-   network = new vis.Network(container, data, options);
+  // Initialize the network
+  const container = document.getElementById("network");
+  network = new vis.Network(container, data, options);
 
   // Call update functions directly
   updateStateList();
@@ -75,21 +78,25 @@ function addState() {
     shape: "circle",
     color: {
       background:
-        isStartState
+        isStartState && isAcceptState
+          ? "#800080" // Highlight start and accept states
+          : isStartState
           ? "#a2d2ff" // Highlight start state
           : isAcceptState
           ? "#4FFFB0" // Highlight accept states
           : "#caf0f8", // Regular state
       border:
-        isStartState
+        isStartState && isAcceptState
+          ? "#800080"
+          : isStartState
           ? "blue"
           : isAcceptState
           ? "green"
           : "white",
     },
-    font : {
+    font: {
       size: 25,
-      face: "cambria"
+      face: "cambria",
     },
     physics: false,
     size: isAcceptState ? 30 : 20, // Larger size for accept states
@@ -98,9 +105,7 @@ function addState() {
 
   // // Reset the state form to its original state
   resetStateForm();
-
 }
-
 
 // Resets the state form to its original state.
 function resetStateForm() {
@@ -123,7 +128,7 @@ function addTransition() {
   const toStateInput = document.getElementById("toState").value.trim();
 
   const isNFA = automaton instanceof NFA;
-  const transitionSymbol = symbol || (isNFA ? "ε" : "");  // Use epsilon for NFA, enforce symbol for DFA
+  const transitionSymbol = symbol || (isNFA ? "ε" : ""); // Use epsilon for NFA, enforce symbol for DFA
 
   // Check of From and To are not empty
   if (!fromState || !toStateInput) {
@@ -144,9 +149,13 @@ function addTransition() {
   // Handle DFA transitions: Check for duplicate symbols for the same fromState
   if (!isNFA) {
     // Check if a transition for this symbol already exists in the DFA
-    const existingTransition = automaton.transitions[fromState] && automaton.transitions[fromState][transitionSymbol];
+    const existingTransition =
+      automaton.transitions[fromState] &&
+      automaton.transitions[fromState][transitionSymbol];
     if (existingTransition) {
-      alert(`Transition already exists for state ${fromState} with symbol ${transitionSymbol}.`);
+      alert(
+        `Transition already exists for state ${fromState} with symbol ${transitionSymbol}.`
+      );
       return;
     }
   }
@@ -158,7 +167,9 @@ function addTransition() {
   updateTransitionList();
   document.getElementById(
     "result"
-  ).textContent = `Transition added: ${fromState} --${transitionSymbol}--> ${toStates.join(", ")}`;
+  ).textContent = `Transition added: ${fromState} --${transitionSymbol}--> ${toStates.join(
+    ", "
+  )}`;
 
   // Reset transition form inputs
   document.getElementById("fromState").value = "";
@@ -167,7 +178,7 @@ function addTransition() {
 
   // Handle self-loop
   const isSelfLoop = fromState === toStateInput;
-  
+
   // Initialize edge offset for self-loop handling
   if (!edgeOffsets[fromState]) edgeOffsets[fromState] = {};
   if (!edgeOffsets[fromState][toStateInput])
@@ -212,7 +223,6 @@ function addTransition() {
     });
   }
 }
-
 
 // Updates the state list UI with the current states of the automaton.
 function updateStateList() {
@@ -303,7 +313,10 @@ function removeState(state) {
 }
 
 function removeTransition(fromState, symbol, toState) {
-  if (automaton.transitions[fromState] && automaton.transitions[fromState][symbol]) {
+  if (
+    automaton.transitions[fromState] &&
+    automaton.transitions[fromState][symbol]
+  ) {
     const toStates = Array.isArray(automaton.transitions[fromState][symbol])
       ? automaton.transitions[fromState][symbol]
       : [automaton.transitions[fromState][symbol]];
@@ -321,13 +334,11 @@ function removeTransition(fromState, symbol, toState) {
   // Remove the edge from the vis.js network
   const edgesToRemove = edges.get({
     filter: (edge) =>
-      edge.from === fromState &&
-      edge.to === toState &&
-      edge.label === symbol,
+      edge.from === fromState && edge.to === toState && edge.label === symbol,
   });
 
   // Remove each matching edge
-  edgesToRemove.forEach(edge => {
+  edgesToRemove.forEach((edge) => {
     edges.remove(edge);
   });
 
@@ -343,7 +354,11 @@ function resetGraphColors() {
 
     let backgroundColor = "#caf0f8"; // Default color
     let borderColor = "black"; // Default border color
-    if (state === automaton.startState) {
+
+    if (state === automaton.startState && automaton.acceptStates.has(state)) {
+      backgroundColor = "#800080"; // Purple for start and accept states
+      borderColor = "purple";
+    } else if (state === automaton.startState) {
       backgroundColor = "#a2d2ff"; // Light blue for start state
       borderColor = "blue"; // Blue border for start state
     } else if (automaton.acceptStates.has(state)) {
@@ -376,7 +391,6 @@ function resetGraphColors() {
   });
 }
 
-
 function simulateWithAnimation(input) {
   // Verify if automaton is initialized
   if (!automaton) {
@@ -384,241 +398,260 @@ function simulateWithAnimation(input) {
     return;
   }
 
-  // Computes the epsilon closure of the initial statesAI
-  // The epsilon closure is the set of all states reachable from 
-  // the initial states using only epsilon transitions.
+  // Finds all states connected to the initial states.
+  // For NFAs, this includes computing the epsilon closure (states reachable via ε-transitions).
+  // For DFAs, this simply identifies reachable states without ε-transitions.
   function getEpsilonClosure(initialStates) {
-    const closure = new Set(initialStates);               // Set to store the epsilon closure
-    const stack = [...initialStates];                     // Stack to perform depth-first search
-    const epsilonPath = [];                               // Array to store epsilon transitions
+    const closure = new Set(initialStates); // Tracks all connected states (including ε-closure for NFAs).
+    const stack = [...initialStates]; // Stack to perform depth-first search.
+    const epsilonPath = []; // Records ε-transitions (used in NFAs, empty for DFAs).
 
-
-    // Perform depth-first search
+    // Explore all reachable states using depth-first search.
     while (stack.length > 0) {
-      const state = stack.pop();                                                   // Get the current state
+      const state = stack.pop();
 
-      if (automaton.transitions[state] && automaton.transitions[state]["ε"]) {     // If the current state has epsilon transitions, then
-        const epsilonTransitions = automaton.transitions[state]["ε"];              // Get the epsilon transition of the current state
-        const newStates = Array.isArray(epsilonTransitions)                        // Ensure that epsilonTransitions is an array
-          ? epsilonTransitions                                                     
-          : [epsilonTransitions];                                                 
+      // For NFAs, check for ε-transitions from the current state.
+      if (automaton.transitions[state] && automaton.transitions[state]["ε"]) {
+        const epsilonTransitions = automaton.transitions[state]["ε"];
+        const newStates = Array.isArray(epsilonTransitions)
+          ? epsilonTransitions
+          : [epsilonTransitions];
 
-        newStates.forEach((epsilonState) => {                                      // Iterate over the list of epsilon states
-          if (!closure.has(epsilonState)) {                                        // Check if the epsilon state is already in the closure (to avoid loop of death)
-            closure.add(epsilonState);                                             // add the epsilon state to the closure
-            stack.push(epsilonState);                                              // push the epsilon state to the stack
-            epsilonPath.push({ from: state, to: epsilonState });                   // add the epsilon transition to the path
+        newStates.forEach((epsilonState) => {
+          if (!closure.has(epsilonState)) {
+            closure.add(epsilonState); // Add new state to closure.
+            stack.push(epsilonState); // Continue exploring from the new state.
+            epsilonPath.push({ from: state, to: epsilonState }); // Record the ε-transition for visualization.
           }
         });
       }
     }
 
-    return { closureStates: Array.from(closure), epsilonPath: epsilonPath };       // return the epsilon closure and the epsilon path
+    // Return reachable states (closureStates) and ε-transitions (epsilonPath).
+    // For DFAs, epsilonPath will always be empty.
+    return { closureStates: Array.from(closure), epsilonPath: epsilonPath };
   }
 
-  if (input.length === 0) {                                                                 // Handle empty/epsilon input
-    const { closureStates, epsilonPath } = getEpsilonClosure([automaton.startState]);       // Get the epsilon closure and path 
-  
-    function animateEpsilonTransitions(pathIndex = 0) {                   // Function to animate epsilon transitions
-      if (pathIndex >= epsilonPath.length) {                              // Termination condition if all epsilon transitions have been animated
-        const isAccepted = closureStates.some((state) =>                  // Check if any state in the closure is an accept state
+  if (input.length === 0) {
+    // Handle empty input (interpreted as ε).
+    const { closureStates, epsilonPath } = getEpsilonClosure([
+      automaton.startState,
+    ]);
+
+    function animateEpsilonTransitions(pathIndex = 0) {
+      // Animate ε-transitions for NFAs.
+      if (pathIndex >= epsilonPath.length) {
+        // Termination condition: all ε-transitions have been animated.
+        const isAccepted = closureStates.some((state) =>
           automaton.acceptStates.has(state)
         );
-        document.getElementById("result").textContent = isAccepted        // If accept state is in closure,
-          ? "Accepted (Empty String)"                                     // Accepted, else
-          : "Rejected (Empty String)";                                    // Rejected.
-
-        highlightState(closureStates, [], "ε");                           // Highlight the epsilon closure
-        resetGraphColors(); // Reset graph colors after simulation        // Reset graph colors
-        return;                                                           // terminate the function
-      }
-      
-      // ANIMATION STARTS HERE
-      const { from, to } = epsilonPath[pathIndex];                        // Get the current epsilon transition
-  
-      // Display the transition and render the graph
-      document.getElementById("result").textContent = `ε-transition: ${from} → ${to}`;    
-      highlightState([from], [to], "ε");
-  
-      // Introduce a delay before proceeding to the next epsilon transition
-      setTimeout(() => {
-        animateEpsilonTransitions(pathIndex + 1);                         // Recursively animate the next epsilon transition
-      }, 1000);                                                           // 1-second delay for each epsilon transition
-    }
-  
-    animateEpsilonTransitions();
-    return;                                                               // terminate the function
-  }
-
-  let currentStates = [automaton.startState];                             // allow all functions to access the currentStates
-  let currentIndex = 0;                                                   // allow all functions to access the currentIndex (animation step)
-
-  
-  // Function to animate a single step of the simulation
-  function animateStep() {                                                
-    if (currentIndex >= input.length) {                                   // Termination condition if all input symbols have been processed
-      const isAccepted = currentStates.some((state) =>                    // Check if any state in the current states is an accept state
-        automaton.acceptStates.has(state)
-      );
-      document.getElementById("result").textContent = isAccepted          // If accept state is in current states,
-        ? "Accepted"                                                      // Accepted, else
-        : "Rejected";                                                     // Rejected.
-      resetGraphColors();                                                 // Reset graph colors after simulation
-      return;
-    }
-  
-    const symbol = input[currentIndex];                                   // Get the current symbol
-  
-    function performEpsilonClosureAndTransition() {
-      // First, compute epsilon closure for the current states
-      const { closureStates, epsilonPath } = getEpsilonClosure(currentStates);
-      
-
-      // uhhuh, yes animate epsilon transitions
-      function animateEpsilonTransitions(pathIndex = 0) {                   
-        if (pathIndex >= epsilonPath.length) {                                  // Termination condition if all epsilon transitions have been animated
-          // After epsilon transitions are done, process the current symbol
-          processSymbol(closureStates);
-          return;
-        }
-  
-        const { from, to } = epsilonPath[pathIndex];
-  
-        // Display the epsilon transition and render the graph
-        document.getElementById("result").textContent = `ε-transition: ${from} → ${to}`;
-        highlightState([from], [to], "ε");
-  
-        // Introduce a delay before proceeding to the next epsilon transition
-        setTimeout(() => {
-          animateEpsilonTransitions(pathIndex + 1);
-        }, 1000); // 1-second delay for each epsilon transition
-      }
-  
-      animateEpsilonTransitions();
-    }
-    
-    
-    // INPUT PROCESSOR YES THE REAL DEAL
-    function processSymbol(closureStates) {                 // Function to process the current symbol
-      const nextStates = [];                                // Initialize an array to store the next states
-
-      closureStates.forEach((state) => {                    // Process the transition for the current symbol
-        if (
-          automaton.transitions[state] &&                   // Check if the state has a transition for the current symbol
-          automaton.transitions[state][symbol]
-        ) {
-          const transitionTargets = automaton.transitions[state][symbol];         // Get the transition targets
-          const targets = Array.isArray(transitionTargets)                        // Check if the transition targets are an array
-            ? transitionTargets                                                   // If they are, use them as-is
-            : [transitionTargets];                                                // Else, wrap them in an array  
-          nextStates.push(...targets);                                            // Add the transition targets to the next states
-        }
-      });
-      
-      // No transitions??? XXXXXXXX REJECTED XXXXXXXX
-      if (nextStates.length === 0) {
-        document.getElementById("result").textContent = `Rejected: No transition for ${symbol} from states ${closureStates.join(", ")}`;
-        resetGraphColors(); // Reset graph colors on rejection
+        document.getElementById("result").textContent = isAccepted
+          ? "Accepted (Empty String)"
+          : "Rejected (Empty String)";
+        highlightState(closureStates, [], "ε"); // Highlight all states in the ε-closure.
+        resetGraphColors(); // Reset graph colors after simulation.
         return;
       }
-  
-      // Now, we compute the epsilon closure for the next set of states
-      const { 
-        closureStates: nextClosureStates, 
-        epsilonPath: nextClosureTransitions 
+
+      const { from, to } = epsilonPath[pathIndex]; // Get the current ε-transition.
+
+      // Display the transition and animate the graph.
+      document.getElementById(
+        "result"
+      ).textContent = `ε-transition: ${from} → ${to}`;
+      highlightState([from], [to], "ε");
+
+      // Delay before animating the next ε-transition.
+      setTimeout(() => {
+        animateEpsilonTransitions(pathIndex + 1);
+      }, 1000); // 1-second delay per ε-transition.
+    }
+
+    animateEpsilonTransitions();
+    return;
+  }
+
+  let currentStates = [automaton.startState]; // Current states being processed.
+  let currentIndex = 0; // Current step in the input string.
+
+  // Function to animate a single simulation step.
+  function animateStep() {
+    if (currentIndex >= input.length) {
+      // Termination condition: all input symbols processed.
+      const isAccepted = currentStates.some((state) =>
+        automaton.acceptStates.has(state)
+      );
+      document.getElementById("result").textContent = isAccepted
+        ? "Accepted"
+        : "Rejected";
+      resetGraphColors(); // Reset graph colors after simulation.
+      return;
+    }
+
+    const symbol = input[currentIndex]; // Get the current symbol.
+
+    function performEpsilonClosureAndTransition() {
+      // Compute ε-closure for current states (important for NFAs).
+      const { closureStates, epsilonPath } = getEpsilonClosure(currentStates);
+
+      function animateEpsilonTransitions(pathIndex = 0) {
+        // Animate ε-transitions before processing the symbol.
+        if (pathIndex >= epsilonPath.length) {
+          processSymbol(closureStates); // Process the symbol after ε-transitions.
+          return;
+        }
+
+        const { from, to } = epsilonPath[pathIndex];
+
+        // Display the ε-transition and update the graph.
+        document.getElementById(
+          "result"
+        ).textContent = `ε-transition: ${from} → ${to}`;
+        highlightState([from], [to], "ε");
+
+        // Delay before animating the next ε-transition.
+        setTimeout(() => {
+          animateEpsilonTransitions(pathIndex + 1);
+        }, 1000);
+      }
+
+      animateEpsilonTransitions();
+    }
+
+    function processSymbol(closureStates) {
+      // Process the current symbol and determine the next states.
+      const nextStates = [];
+
+      closureStates.forEach((state) => {
+        if (
+          automaton.transitions[state] &&
+          automaton.transitions[state][symbol]
+        ) {
+          const transitionTargets = automaton.transitions[state][symbol];
+          const targets = Array.isArray(transitionTargets)
+            ? transitionTargets
+            : [transitionTargets];
+          nextStates.push(...targets); // Add all reachable states for the current symbol.
+        }
+      });
+
+      if (nextStates.length === 0) {
+        // No valid transitions for the current symbol.
+        document.getElementById(
+          "result"
+        ).textContent = `Rejected: No transition for ${symbol} from states ${closureStates.join(
+          ", "
+        )}`;
+        resetGraphColors(); // Reset graph colors on rejection.
+        return;
+      }
+
+      // Compute ε-closure for the next states (important for NFAs).
+      const {
+        closureStates: nextClosureStates,
+        epsilonPath: nextClosureTransitions,
       } = getEpsilonClosure(nextStates);
-  
-      // Display the transition information and render the graph
-      document.getElementById("result").textContent = `Processing Symbols "${symbol}": ${closureStates.join(", ")} → ${nextClosureStates.join(", ")}`;
-      console.log(`Processing Symbols: ${closureStates.join(", ")} → ${nextClosureStates.join(", ")}`);      
-      highlightState(closureStates, nextClosureStates, symbol, nextClosureTransitions);
-  
-      // Update current states with the closure states
+
+      // Display the transition and update the graph.
+      document.getElementById(
+        "result"
+      ).textContent = `Processing Symbol: ${symbol} (${closureStates.join(
+        ", "
+      )} → ${nextClosureStates.join(", ")})`;
+      highlightState(
+        closureStates,
+        nextClosureStates,
+        symbol,
+        nextClosureTransitions
+      );
+
+      // Update current states and proceed to the next step.
       currentStates = nextClosureStates;
       currentIndex++;
-  
-      // Continue the simulation after a short delay
-      setTimeout(animateStep, 1000);
+
+      setTimeout(animateStep, 1000); // Delay before processing the next symbol.
     }
-  
+
     performEpsilonClosureAndTransition();
   }
-  
-  
 
   animateStep();
 }
 
+// Animates the graph by recoloring states and transitions for a simulation step.
+function highlightState(
+  currentStates,
+  nextStates,
+  transitionSymbol,
+  epsilonTransitions = []
+) {
+  const networkNodes = network.body.data.nodes; // Access graph nodes.
+  networkNodes.forEach((node) => {
+    const state = node.id;
 
-// "Animation" of the graph.
-// just recoloring states and transitions to make it look like an animiation basically
-function highlightState(currentStates, nextStates, transitionSymbol, epsilonTransitions = []) {
-  const networkNodes = network.body.data.nodes;           // instantiate network nodes
-  networkNodes.forEach((node) => {                        // loop through all nodes
-    const state = node.id;                                // get the node id
-
-    // WHAT TYPE OF NODE ARE YOUUU?? (CLASSIFICATION)
-    let backgroundColor = "#caf0f8";                      // just a chill state (wala na traverse)
+    // Determine the node's color based on its role in the simulation.
+    let backgroundColor = "#caf0f8"; // Default state color (unvisited).
     if (currentStates.includes(state)) {
-      backgroundColor = "#ffe399";                        // Yellow for current states (node rn)
+      backgroundColor = "#ffe399"; // Yellow for current states.
     } else if (nextStates.includes(state)) {
-      backgroundColor = "#ff9b0b";                        // Orange for next states (node nt)
+      backgroundColor = "#ff9b0b"; // Orange for next states.
+    } else if (
+      state === automaton.startState &&
+      automaton.acceptStates.has(state)
+    ) {
+      backgroundColor = "#800080"; // Light blue for the start state.
     } else if (state === automaton.startState) {
-      backgroundColor = "#a2d2ff";                        // Light blue for start state 
+      backgroundColor = "#a2d2ff"; // Light blue for the start state.
     }
 
-    // Outline lang para klaro
-    let borderColor = "white";                            // npc ahh
-    if (state === automaton.startState) { 
-      borderColor = "blue";                               // START STATE BLUE BLUE START BLUE BLUEEEEE
+    let borderColor = "white"; // Default border color.
+    if (state === automaton.startState && automaton.acceptStates.has(state)) {
+      borderColor = "purple"; // Purple for the start and accept states.
+    } else if (state === automaton.startState) {
+      borderColor = "blue"; // Blue for the start state.
     } else if (automaton.acceptStates.has(state)) {
-      borderColor = "green";                              // ACCEPT STATE GREEN GREEEN GREEEEEEEEEEEEN
-      borderWidth = 4;
+      borderColor = "green"; // Green for accept states.
     }
 
-    // Update node properties
-    networkNodes.update({                                 // What happens here is gina update nato ang states nato para "animated"
-      id: state,                                          // RECOLOR NODES, ANIMATION, MAGIC, WHOAAAA
+    networkNodes.update({
+      id: state,
       color: {
         background: backgroundColor,
-        border: borderColor
+        border: borderColor,
       },
       borderWidth: automaton.acceptStates.has(state) ? 4 : 2,
-      size: (currentStates.includes(state) || nextStates.includes(state) || automaton.acceptStates.has(state)) ? 30 : 20
+      size:
+        currentStates.includes(state) ||
+        nextStates.includes(state) ||
+        automaton.acceptStates.has(state)
+          ? 30
+          : 20,
     });
   });
 
-  // Update edges directly in the vis.js network
-  const networkEdges = network.body.data.edges;           // instantiate network edges
-  networkEdges.forEach((edge) => {                        // loop through all edges
-    const isActiveTransition =                            // check if the edge is an active transition
-      (currentStates.includes(edge.from) &&               // check if the edge's from state is in the current states
+  const networkEdges = network.body.data.edges; // Access graph edges.
+  networkEdges.forEach((edge) => {
+    const isActiveTransition =
+      (currentStates.includes(edge.from) &&
         nextStates.includes(edge.to) &&
         edge.label === transitionSymbol) ||
-      (edge.label === "ε" &&                              // check if the edge is an epsilon transition
-        currentStates.includes(edge.from) &&
-        nextStates.includes(edge.to)) ||
-      // Add check for epsilon transitions
-      epsilonTransitions.some(
-        (transition) => transition.from === edge.from && transition.to === edge.to
-      );
+      (edge.label === "ε" &&
+        epsilonTransitions.some(
+          (transition) =>
+            transition.from === edge.from && transition.to === edge.to
+        ));
 
-    networkEdges.update({                         // What happens now is all edges that is epsilon are highlighted
+    networkEdges.update({
       id: edge.id,
-      color: {
-        color: isActiveTransition ? "red" : "#848484"
-      },
-      width: isActiveTransition ? 3 : 1
+      color: { color: isActiveTransition ? "red" : "#848484" },
+      width: isActiveTransition ? 3 : 1,
     });
   });
 }
 
-
-
-// Modify the existing simulate button to use animation
 function simulate() {
   const testString = document.getElementById("testString").value.trim();
   simulateWithAnimation(testString);
 }
-// Initialize automaton to DFA by default
+
 initializeAutomaton();
